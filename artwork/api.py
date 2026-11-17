@@ -213,5 +213,9 @@ def print_spec_preview(doc):
 	frappe.has_permission("Item", "read", throw=True)
 	d = frappe.get_doc(json.loads(doc) if isinstance(doc, str) else doc)
 	apply_print_spec(d)
+	from artwork.processing import print_supplier, template_variants
+
+	variants = [v.variant or "" for v in template_variants(print_supplier(d), d.get("artwork_product_size"),
+		d.get("artwork_print_type"))]
 	return {"artwork_template": d.artwork_template, "packing_component": d.get("packing_component"),
-		"description": d.description}
+		"description": d.description, "variants": variants}

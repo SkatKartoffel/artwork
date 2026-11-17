@@ -100,7 +100,7 @@ def cluster(lines, tol=0.75):
 
 
 def find_spine(pdf_path: str, centre_hint_pt: float, expected_width_mm: float | None = None,
-               min_mm: float = 1.0, max_mm: float = 60.0):
+               min_mm: float = 1.0, max_mm: float = 60.0, max_offset_mm: float = 25.0):
     """Find the pair of fold lines forming the spine.
 
     Picks long vertical lines, then the pair whose midpoint is closest to the
@@ -130,6 +130,10 @@ def find_spine(pdf_path: str, centre_hint_pt: float, expected_width_mm: float | 
     if not best:
         return None
     _, a, b = best
+    if abs((a + b) / 2 - centre_hint_pt) > pt(max_offset_mm):
+        # a pair far from the middle is not the spine (e.g. a bleed line beside a cut line, or one of the
+        # two spines of a triple gatefold) - the caller then centres on the trim instead
+        return None
     return {"centre": (a + b) / 2, "left": a, "right": b, "width": b - a}
 
 
@@ -168,6 +172,13 @@ def resolve_template_geometry(tgeo: dict, cfg: dict, spine: dict | None) -> dict
     else:
         trim = [bleed, bleed, W - bleed, H - bleed]
     bl = [max(0, trim[0] - bleed), max(0, trim[1] - bleed), min(W, trim[2] + bleed), min(H, trim[3] + bleed)]
+    tb = tgeo.get("bleed")
+    if tgeo.get("has_bleed") and tgeo.get("has_trim") and not (cfg.get("trim_width_mm") and cfg.get("trim_height_mm")) \
+            and tb and tb[0] <= trim[0] + 0.5 and tb[1] <= trim[1] + 0.5 and tb[2] >= trim[2] - 0.5 and tb[3] >= trim[3] - 0.5 \
+            and (tb[2] - tb[0]) < W - 1 and (tb[3] - tb[1]) < H - 1:
+        # the template says exactly how much bleed each side needs (it can differ per side)
+        bl = list(tb)
+        bleed = max(trim[0] - tb[0], trim[1] - tb[1], tb[2] - trim[2], tb[3] - trim[3], 0)
     return {
         "width": W, "height": H, "trim": trim, "bleed": bl, "bleed_pt": bleed,
         "spine_centre": sx, "spine_width": spine_w, "spine_source": src,

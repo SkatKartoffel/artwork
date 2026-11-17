@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "creation": "2026-11-17 17:20:00.000000",
- "modified": "2026-11-17 17:20:00.000000",
+ "modified": "2026-11-17 23:55:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "module": "Artwork",
@@ -16,6 +16,7 @@
   "supplier",
   "product_size",
   "print_type",
+  "variant",
   "enabled",
   "cb1",
   "template_file",
@@ -74,6 +75,14 @@
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1
+  },
+  {
+   "fieldname": "variant",
+   "fieldtype": "Data",
+   "label": "Variant",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Optional. Tells apart templates that share a supplier, size and print type, e.g. 1 Hole Front, Discobag, Top Opener. Picked on the item's Print Spec."
   },
   {
    "fieldname": "enabled",

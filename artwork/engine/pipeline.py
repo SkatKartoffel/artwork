@@ -19,7 +19,10 @@ from .util import EngineError, Report, mm, pt
 from .walker import list_spot_names, name_matches, run_mode
 
 DEFAULT_TEMPLATE_ALIASES = ["Template", "Dieline", "Die Line", "Die", "Cut", "CutContour", "Cut Contour",
-                            "Crease", "Fold", "Knife", "Stanze", "Stanzkontur", "Thru-cut", "Kiss Cut"]
+                            "Crease", "Fold", "Knife", "Stanze", "Stanzkontur", "Thru-cut", "Kiss Cut",
+                            "Bleed", "Safe Area", "Score / Fold", "Glue", "Notes", "Perforation"]
+# spot names of the Packaged Sounds template standard: always treated as template lines, never printed
+PS_STANDARD_SPOTS = ["Cut", "Bleed", "Safe Area", "Score / Fold", "Glue", "Notes", "Perforation"]
 
 
 def process_component(job: dict) -> dict:

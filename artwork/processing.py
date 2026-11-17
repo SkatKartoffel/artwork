@@ -13,6 +13,8 @@ import frappe
 from frappe import _
 from frappe.utils import cint, flt, now_datetime
 
+from artwork.engine.pipeline import PS_STANDARD_SPOTS
+
 INTENTS = {"Perceptual": 0, "Relative Colorimetric": 1, "Saturation": 2, "Absolute Colorimetric": 3}
 OUTPUT_FIELDS = (
 	"processing_status", "error_count", "warning_count", "approved", "print_file", "proof_file", "preview_image",
@@ -66,12 +68,26 @@ def is_print_item(item: str) -> bool:
 	return bool(groups) and frappe.db.get_value("Item", item, "item_group") in groups
 
 
-def resolve_template(supplier, product_size, print_type) -> str | None:
-	"""The enabled Supplier Template for this supplier + product size + print type."""
+def template_variants(supplier, product_size, print_type) -> list[dict]:
+	"""Enabled Supplier Templates for this supplier + product size + print type: [{name, variant}]."""
 	if not (supplier and product_size and print_type):
-		return None
-	return frappe.db.get_value("Artwork Supplier Template", {"supplier": supplier, "product_size": product_size,
-		"print_type": print_type, "enabled": 1}, "name")
+		return []
+	return frappe.get_all("Artwork Supplier Template", filters={"supplier": supplier, "product_size": product_size,
+		"print_type": print_type, "enabled": 1}, fields=["name", "variant"], order_by="variant asc")
+
+
+def resolve_template(supplier, product_size, print_type, variant=None) -> str | None:
+	"""The enabled Supplier Template for this supplier + product size + print type (+ variant).
+
+	With no variant chosen: the template that has no variant, or the only template there is."""
+	rows = template_variants(supplier, product_size, print_type)
+	variant = (variant or "").strip()
+	for r in rows:
+		if (r.variant or "") == variant:
+			return r.name
+	if not variant and len(rows) == 1:
+		return rows[0].name
+	return None
 
 
 def print_supplier(item_doc) -> str | None:
@@ -85,7 +101,7 @@ def print_supplier(item_doc) -> str | None:
 
 def item_template(item_doc) -> str | None:
 	return resolve_template(print_supplier(item_doc), item_doc.get("artwork_product_size"),
-		item_doc.get("artwork_print_type"))
+		item_doc.get("artwork_print_type"), item_doc.get("artwork_variant"))
 
 
 def spec_problems(item_doc) -> list[str]:
@@ -97,8 +113,13 @@ def spec_problems(item_doc) -> list[str]:
 	if missing:
 		out.append(_("no {0}").format(", ".join(missing)))
 	elif not item_template(item_doc):
-		out.append(_("no Supplier Template exists for {0} · {1} · {2} – create one").format(
-			supplier, item_doc.artwork_product_size, item_doc.artwork_print_type))
+		options = template_variants(supplier, item_doc.artwork_product_size, item_doc.artwork_print_type)
+		if options:
+			out.append(_("pick a Variant for {0} · {1} · {2} ({3})").format(supplier, item_doc.artwork_product_size,
+				item_doc.artwork_print_type, ", ".join(o.variant or _("Standard") for o in options)))
+		else:
+			out.append(_("no Supplier Template exists for {0} · {1} · {2} – create one").format(
+				supplier, item_doc.artwork_product_size, item_doc.artwork_print_type))
 	if not item_doc.get("artwork_finish"):
 		out.append(_("no Finish"))
 	else:
@@ -240,7 +261,8 @@ def build_job(proof, row, item, s, work) -> dict:
 			"bleed_mm": flt(tpl.bleed_mm) if tpl.bleed_mm is not None else flt(s.default_bleed_mm or 3),
 			"safe_margin_mm": flt(tpl.safe_margin_mm or s.safe_margin_mm or 3),
 		},
-		"template_aliases": split_list(s.template_aliases) or None,
+		"template_aliases": list(dict.fromkeys([*split_list(s.template_aliases), *PS_STANDARD_SPOTS]))
+			if split_list(s.template_aliases) else None,
 		"colour": {
 			"profile_path": icc,
 			"identifier": profile.output_condition or profile.profile_name,

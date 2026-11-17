@@ -1,6 +1,14 @@
 // Artwork app: print spec on the SKU (Item)
-const PRINT_SPEC_FIELDS = ["artwork_supplier", "artwork_product_size", "artwork_print_type", "artwork_stock",
+const PRINT_SPEC_FIELDS = ["artwork_supplier", "artwork_product_size", "artwork_print_type", "artwork_variant", "artwork_stock",
 	"artwork_print_colours", "artwork_finish", "artwork_coating", "artwork_notes"];
+
+// Variant: offer the variants this supplier has for the chosen size + print type
+function artworkVariantOptions(frm, d) {
+	if (!frm.fields_dict.artwork_variant) return;
+	const variants = (d.variants || []).filter((v) => v);
+	frm.set_df_property("artwork_variant", "options", variants);
+	frm.toggle_display("artwork_variant", variants.length > 0 || !!frm.doc.artwork_variant);
+}
 
 const artworkPreview = frappe.utils.debounce((frm) => {
 	if (!frm.doc.is_print_item) return;
@@ -13,9 +21,18 @@ const artworkPreview = frappe.utils.debounce((frm) => {
 		}
 		if (d.description && d.description !== frm.doc.description) frm.set_value("description", d.description);
 		const d2 = frm.doc;
-		if (d2.artwork_supplier && d2.artwork_product_size && d2.artwork_print_type && !d.artwork_template) {
-			frappe.show_alert({ message: __("No Supplier Template yet for {0} · {1} · {2}",
-				[d2.artwork_supplier, d2.artwork_product_size, d2.artwork_print_type]), indicator: "orange" });
+		const variants = (d.variants || []).filter((v) => v);
+		artworkVariantOptions(frm, d);
+		if (frm.fields_dict.artwork_variant && d2.artwork_variant && !(d.variants || []).includes(d2.artwork_variant)) {
+			frm.set_value("artwork_variant", "");
+		}
+		if (d2.artwork_product_size && d2.artwork_print_type && !d.artwork_template) {
+			if ((d.variants || []).length > 1 || variants.length) {
+				frappe.show_alert({ message: __("Pick a Variant: {0}", [(d.variants || []).map((v) => v || __("Standard")).join(", ")]), indicator: "orange" });
+			} else if (d2.artwork_supplier) {
+				frappe.show_alert({ message: __("No Supplier Template yet for {0} · {1} · {2}",
+					[d2.artwork_supplier, d2.artwork_product_size, d2.artwork_print_type]), indicator: "orange" });
+			}
 		}
 	});
 }, 400);
@@ -37,6 +54,9 @@ const itemEvents = {
 	},
 
 	refresh(frm) {
+		if (frm.doc.is_print_item) {   // load the Variant choices without touching the document
+			frappe.call("artwork.api.print_spec_preview", { doc: frm.doc }).then((r) => artworkVariantOptions(frm, r.message || {}));
+		}
 		if (frm.is_new() || !frm.doc.is_print_item) return;
 		if (frm.doc.approved_artwork) {
 			frm.add_custom_button(__("Approved Artwork"), () => window.open(frm.doc.approved_artwork), __("Artwork"));

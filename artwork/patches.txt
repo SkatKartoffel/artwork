@@ -11,3 +11,4 @@ artwork.patches.template_lookup_fields
 artwork.patches.print_template_on_item
 artwork.patches.full_print_spec_on_item
 artwork.patches.print_spec_tab
+artwork.patches.load_standard_templates

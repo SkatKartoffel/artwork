@@ -13,7 +13,8 @@ from frappe.utils import flt
 class ArtworkSupplierTemplate(Document):
 	def autoname(self):
 		if not self.template_name:
-			self.template_name = f"{self.supplier} – {self.product_size} {self.print_type}"
+			self.template_name = f"{self.supplier} – {self.product_size} {self.print_type}" + (
+				f" – {self.variant}" if self.variant else "")
 		self.name = self.template_name
 
 	def validate(self):
@@ -23,13 +24,15 @@ class ArtworkSupplierTemplate(Document):
 			self.no_spine = frappe.db.get_value("Artwork Print Type", self.print_type, "no_spine") or 0
 		if self.print_type:
 			self.packing_component = frappe.db.get_value("Artwork Print Type", self.print_type, "packing_component")
+		self.variant = (self.variant or "").strip() or None
 		if self.enabled and self.supplier and self.product_size and self.print_type:
-			clash = frappe.db.get_value("Artwork Supplier Template", {"supplier": self.supplier,
+			others = frappe.get_all("Artwork Supplier Template", filters={"supplier": self.supplier,
 				"product_size": self.product_size, "print_type": self.print_type, "enabled": 1,
-				"name": ["!=", self.name]}, "name")
+				"name": ["!=", self.name]}, fields=["name", "variant"])
+			clash = next((o.name for o in others if (o.variant or "") == (self.variant or "")), None)
 			if clash:
-				frappe.throw(_("{0} is already the enabled template for {1} · {2} · {3}. Disable one of them.").format(
-					clash, self.supplier, self.product_size, self.print_type))
+				frappe.throw(_("{0} is already the enabled template for {1} · {2} · {3}{4}. Disable one of them or give this one a Variant.").format(
+					clash, self.supplier, self.product_size, self.print_type, f" · {self.variant}" if self.variant else ""))
 		if self.has_value_changed("template_file") or self.has_value_changed("template_page"):
 			self.flags.redetect = True
 

@@ -55,6 +55,8 @@ def spec_description(doc) -> str:
 	"""e.g. 12" Outer Sleeve – 3mm Spine · 350gsm GC1 Board · 4/0 CMYK · Matt finish · Matt Lamination ·
 	Spot UV, Hot Foil Gold · <notes>"""
 	product = " ".join(filter(None, [doc.get("artwork_product_size"), doc.get("artwork_print_type")]))
+	if product and doc.get("artwork_variant"):
+		product += f" ({doc.artwork_variant})"
 	parts = [
 		product,
 		_label("Artwork Stock", doc.get("artwork_stock")),

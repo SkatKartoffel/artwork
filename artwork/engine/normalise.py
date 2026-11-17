@@ -78,6 +78,50 @@ def _box(v):
     return [min(a[0], a[2]), min(a[1], a[3]), max(a[0], a[2]), max(a[1], a[3])]
 
 
+def _drop_hidden_layers(spdf, out, page, res, data: bytes) -> bytes:
+    """Remove page content that sits on layers (OCGs) switched off by default, e.g. a template's hidden notes layer."""
+    try:
+        d = spdf.Root.get("/OCProperties", {}).get("/D", {})
+        off = {o.objgen for o in (d.get("/OFF") or [])}
+        if d.get("/BaseState") == Name.OFF:
+            on = {o.objgen for o in (d.get("/ON") or [])}
+            off |= {o.objgen for o in spdf.Root.OCProperties.OCGs if o.objgen not in on}
+        if not off:
+            return data
+        props = (res.get("/Properties") or {}) if res is not None else {}
+        hidden = set()
+        for k, v in props.items():
+            name = v.get("/Name") if isinstance(v, Dictionary) else None
+            if name is None:
+                continue
+            # the page was copied into a new file, so match the layer by name against the source's hidden layers
+            if any(str(o.get("/Name")) == str(name) for o in spdf.Root.OCProperties.OCGs if o.objgen in off):
+                hidden.add(str(k))
+        if not hidden:
+            return data
+        tmp = out.make_stream(data)
+        keep, depth, skip_from = [], 0, None
+        for ins in pikepdf.parse_content_stream(tmp):
+            op = str(ins.operator) if not isinstance(ins, pikepdf.ContentStreamInlineImage) else "INLINE"
+            if op in ("BDC", "BMC"):
+                depth += 1
+                if skip_from is None and op == "BDC" and len(ins.operands) == 2 and ins.operands[0] == Name.OC \
+                        and str(ins.operands[1]) in hidden:
+                    skip_from = depth
+                    continue
+            elif op == "EMC":
+                if skip_from is not None and depth == skip_from:
+                    skip_from = None
+                    depth -= 1
+                    continue
+                depth -= 1
+            if skip_from is None:
+                keep.append(ins)
+        return pikepdf.unparse_content_stream(keep)
+    except Exception:
+        return data
+
+
 def normalise_page(src: str, page_index: int, dst: str) -> dict:
     """Write page `page_index` of `src` to `dst` as an upright page at origin.
 
@@ -104,6 +148,7 @@ def normalise_page(src: str, page_index: int, dst: str) -> dict:
             res = _inherited(p.obj, "/Resources") or Dictionary()
         p.contents_coalesce()
         data = p.obj.Contents.read_bytes() if "/Contents" in p.obj else b""
+        data = _drop_hidden_layers(spdf, out, p, res, data)
 
     x0, y0, x1, y1 = view
     w, h = x1 - x0, y1 - y0
@@ -148,7 +193,7 @@ def normalise_page(src: str, page_index: int, dst: str) -> dict:
         if k in p.obj:
             del p.obj[k]
     p.obj.MediaBox = Array([0, 0, W, H])
-    geo = {"width": W, "height": H, "has_trim": trim is not None}
+    geo = {"width": W, "height": H, "has_trim": trim is not None, "has_bleed": bleed is not None}
     geo["trim"] = tx(trim) if trim is not None else [0, 0, W, H]
     geo["bleed"] = tx(bleed) if bleed is not None else [0, 0, W, H]
     p.obj.TrimBox = Array(geo["trim"])

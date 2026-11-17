@@ -1,0 +1,1092 @@
+[
+ {
+  "supplier": "Takt",
+  "file": "takt/10in-gatefold-outer.pdf",
+  "product_size": "10\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 10 Inch Gatefold Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/10in-printed-inner-sleeve.pdf",
+  "product_size": "10\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 10 Inch Inner Sleeve Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/10in-centre-label.pdf",
+  "product_size": "10\"",
+  "print_type": "Centre Label",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 3,
+  "source": "PS - Vinyl 10 Inch Label Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/10in-outer-sleeve-3mm-spine.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 10 Inch Sleeve 3mm Spine Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-gatefold-outer-4lp-double-gatefold.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "4LP Double Gatefold",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch 4LP Double Gatefold Vinyl Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-poster-4pp-folded.pdf",
+  "product_size": "12\"",
+  "print_type": "Poster",
+  "variant": "4PP Folded",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch 4PP Folded Poster Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-gatefold-outer-3lp.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "3LP",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Gatefold Sleeve 3x Vinyl Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-gatefold-outer-4lp.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "4LP",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Gatefold Sleeve 4x Vinyl Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-gatefold-outer.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Gatefold Sleeve Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-printed-inner-sleeve-heavy-weight.pdf",
+  "product_size": "12\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "Heavy Weight",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Heavy Weight Inner Sleeve Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-printed-inner-sleeve-2-holes.pdf",
+  "product_size": "12\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "2 Holes",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Inner Sleeve 2 Holes Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-printed-inner-sleeve.pdf",
+  "product_size": "12\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Inner Sleeve Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-poster-24in-x-24in-folded.pdf",
+  "product_size": "12\"",
+  "print_type": "Poster",
+  "variant": "24in x 24in Folded",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Insert 2 Folded Poster (24in x 24in) Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-insert.pdf",
+  "product_size": "12\"",
+  "print_type": "Insert",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Insert 2PP Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-centre-label.pdf",
+  "product_size": "12\"",
+  "print_type": "Centre Label",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 3,
+  "source": "PS - Vinyl 12 Inch Label Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-picture-disc.pdf",
+  "product_size": "12\"",
+  "print_type": "Picture Disc",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 3,
+  "source": "PS - Vinyl 12 Inch Picture Disc.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-poster-600mm-x-900mm.pdf",
+  "product_size": "12\"",
+  "print_type": "Poster",
+  "variant": "600mm x 900mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Poster (600mm x 900mm) Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-outer-sleeve-3mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Sleeve 3mm Spine Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-outer-sleeve-6mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 6mm Spine",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Sleeve 6mm Spine.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-outer-sleeve-spineless-discobag-2-holes.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "Discobag 2 Holes",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Sleeve Discobag 2 Holes Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/12in-outer-sleeve-spineless.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 12 Inch Sleeve Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-centre-label-89mm.pdf",
+  "product_size": "7\"",
+  "print_type": "Centre Label",
+  "variant": "89mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 3,
+  "source": "PS - Vinyl 7 Inch 89mm Label Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-centre-label-89mm-larger-hole.pdf",
+  "product_size": "7\"",
+  "print_type": "Centre Label",
+  "variant": "89mm Larger Hole",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 3,
+  "source": "PS - Vinyl 7 Inch 89mm Larger Hole Label Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-centre-label-89mm-second-template.pdf",
+  "product_size": "7\"",
+  "print_type": "Centre Label",
+  "variant": "89mm (second template)",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 3,
+  "source": "PS - Vinyl 7 Inch Label Template 89mm.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-gatefold-outer.pdf",
+  "product_size": "7\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 7 Inch Gatefold Sleeve 2LP Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-printed-inner-sleeve.pdf",
+  "product_size": "7\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 7 Inch Inner Sleeve Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-insert.pdf",
+  "product_size": "7\"",
+  "print_type": "Insert",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 7 Inch Insert Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-outer-sleeve-spineless-fits-inner.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "Fits Inner",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 7 Inch Sleeve (Fits Inner) Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-outer-sleeve-spineless-no-inner-top-loading.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "No Inner – Top Loading",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 7 Inch Sleeve (No Inner) (Top Loading) Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-outer-sleeve-spineless-no-inner.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "No Inner",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 7 Inch Sleeve (No Inner) Template.pdf"
+ },
+ {
+  "supplier": "Takt",
+  "file": "takt/7in-outer-sleeve-3mm-spine.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "PS - Vinyl 7 Inch Sleeve 3mm Spine Template.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-gatefold-outer-one-piece.pdf",
+  "product_size": "10\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "One Piece",
+  "bleed_mm": 4.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in One Piece Gatefold_6mm_266mm x 264mm.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-spineless-1-hole-back.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "1 Hole Back",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Single Sleeve_260mm_No Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-spineless-1-hole-front.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "1 Hole Front",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Single Sleeve_260mm_No Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-spineless-2-holes.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "2 Holes",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Single Sleeve_260mm_No Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-spineless.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Single Sleeve_260mm_No Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-3mm-spine-1-hole-front.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "1 Hole Front",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Spined Sleeve_265mm_3mm Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-3mm-spine-2-holes.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "2 Holes",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Spined Sleeve_265mm_3mm Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-3mm-spine.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Spined Sleeve_265mm_3mm Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-5mm-spine-1-hole-back.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "1 Hole Back",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Spined Sleeve_265mm_5mm Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-5mm-spine-1-hole-front.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "1 Hole Front",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Spined Sleeve_265mm_5mm Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-5mm-spine-2-holes.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "2 Holes",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Spined Sleeve_265mm_5mm Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/10in-outer-sleeve-5mm-spine.pdf",
+  "product_size": "10\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 10in Spined Sleeve_265mm_5mm Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-gatefold-inner-2-piece.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Inner",
+  "variant": "2 Piece",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Gatefold_6mm Spine_2 Piece_Inner Template.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-gatefold-outer-2-piece.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "2 Piece",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Gatefold_6mm Spine_2 Piece_Outer.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-obi-card-gatefold-6mm-spine-64x312mm.pdf",
+  "product_size": "12\"",
+  "print_type": "Obi Card",
+  "variant": "Gatefold 6mm Spine – 64x312mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Gatefold_6mm Spine_64x312mm_Obi Card.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-obi-card-gatefold-6mm-spine-80x312mm.pdf",
+  "product_size": "12\"",
+  "print_type": "Obi Card",
+  "variant": "Gatefold 6mm Spine – 80x312mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Gatefold_6mm Spine_80x312mm_Obi Card.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-centre-label.pdf",
+  "product_size": "12\"",
+  "print_type": "Centre Label",
+  "variant": "",
+  "bleed_mm": 2.5,
+  "safe_margin_mm": 3,
+  "source": "Rad - 12in Label 106mm Side A+B.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-gatefold-outer-one-piece.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "One Piece",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in One Piece Gatefold_6mm_316mm x 315mm.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-spineless-1-hole-back.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "1 Hole Back",
+  "bleed_mm": 6.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Single Sleeve_610mm x 309mm_No Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-spineless-1-hole-front.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "1 Hole Front",
+  "bleed_mm": 6.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Single Sleeve_610mm x 309mm_No Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-spineless.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "",
+  "bleed_mm": 6.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Single Sleeve_610mm x 309mm_No Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-insert.pdf",
+  "product_size": "12\"",
+  "print_type": "Insert",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Sleeve Insert 290mm x 290mm.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-obi-card-sleeve-3mm-spine-105x312mm.pdf",
+  "product_size": "12\"",
+  "print_type": "Obi Card",
+  "variant": "Sleeve 3mm Spine – 105x312mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Sleeve_3mm Spine_105x312mm_Obi Card.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-obi-strip.pdf",
+  "product_size": "12\"",
+  "print_type": "Obi Strip",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Sleeve_3mm Spine_60x663mm_Obi Strip.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-obi-card-sleeve-5mm-spine-60x312mm.pdf",
+  "product_size": "12\"",
+  "print_type": "Obi Card",
+  "variant": "Sleeve 5mm Spine – 60x312mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Sleeve_5mm Spine_60x312mm_OBI Card.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-obi-card-sleeve-5mm-spine-80x312mm.pdf",
+  "product_size": "12\"",
+  "print_type": "Obi Card",
+  "variant": "Sleeve 5mm Spine – 80x312mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Sleeve_5mm Spine_80x312mm_OBI Card.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-3mm-spine-1-hole-back.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "1 Hole Back",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_633x315_3mm Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-3mm-spine-1-hole-front.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "1 Hole Front",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_633x315_3mm Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-3mm-spine-2-holes.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "2 Holes",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_633x315_3mm Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-3mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_633x315_3mm Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-4mm-spine-1-hole-back.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 4mm Spine",
+  "variant": "1 Hole Back",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_634x315_4mm Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-4mm-spine-1-hole-front.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 4mm Spine",
+  "variant": "1 Hole Front",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_634x315_4mm Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-4mm-spine-2-holes.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 4mm Spine",
+  "variant": "2 Holes",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_634x315_4mm Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-4mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 4mm Spine",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_634x315_4mm Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-5mm-spine-1-hole-back.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "1 Hole Back",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_635x315_5mm Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-5mm-spine-1-hole-front.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "1 Hole Front",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_635x315_5mm Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-5mm-spine-2-holes.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "2 Holes",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_635x315_5mm Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-5mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_635x315_5mm Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-6mm-spine-1-hole-back.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 6mm Spine",
+  "variant": "1 Hole Back",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_636x315_6mm Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-6mm-spine-1-hole-front.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 6mm Spine",
+  "variant": "1 Hole Front",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_636x315_6mm Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-6mm-spine-2-holes.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 6mm Spine",
+  "variant": "2 Holes",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_636x315_6mm Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-outer-sleeve-6mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 6mm Spine",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Spined Sleeve_636x315_6mm Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/12in-gatefold-outer-triple-open-pockets.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "Triple – Open Pockets",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 12in Triple Gatefold_6mm Spine_Open Pockets.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-centre-label-uk-84mm.pdf",
+  "product_size": "7\"",
+  "print_type": "Centre Label",
+  "variant": "UK 84mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 3,
+  "source": "Rad - 7in Label UK 84mm Side A+B.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-centre-label-us-90mm.pdf",
+  "product_size": "7\"",
+  "print_type": "Centre Label",
+  "variant": "US 90mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 3,
+  "source": "Rad - 7in Label US 90mm Side A+B.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-obi-strip-no-spine-sleeve.pdf",
+  "product_size": "7\"",
+  "print_type": "Obi Strip",
+  "variant": "No Spine Sleeve",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Single Sleeve_No spine_45x412mm_Obi Strip.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-spineless-182mm-1-hole-back.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "182mm – 1 Hole Back",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_182mm_No Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-spineless-182mm-1-hole-front.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "182mm – 1 Hole Front",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_182mm_No Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-spineless-182mm-2-holes.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "182mm – 2 Holes",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_182mm_No Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-spineless-182mm.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "182mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_182mm_No Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-3mm-spine-1-hole-back.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "1 Hole Back",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_3mm Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-3mm-spine-1-hole-front.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "1 Hole Front",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_3mm Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-3mm-spine-2-holes.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "2 Holes",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_3mm Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-3mm-spine.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_3mm Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-5mm-spine-1-hole-back.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "1 Hole Back",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_5mm Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-5mm-spine-1-hole-front.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "1 Hole Front",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_5mm Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-5mm-spine-2-holes.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "2 Holes",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_5mm Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-5mm-spine.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_5mm Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-spineless-185mm-1-hole-back.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "185mm – 1 Hole Back",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_No Spine_1 Hole Back.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-spineless-185mm-1-hole-front.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "185mm – 1 Hole Front",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_No Spine_1 Hole Front.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-spineless-185mm-2-holes.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "185mm – 2 Holes",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_No Spine_2 Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-outer-sleeve-spineless-185mm.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "185mm",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Sleeve_185mm_No Spine_No Holes.pdf"
+ },
+ {
+  "supplier": "Rad",
+  "file": "rad/7in-obi-strip-3mm-spine-sleeve.pdf",
+  "product_size": "7\"",
+  "print_type": "Obi Strip",
+  "variant": "3mm Spine Sleeve",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 5,
+  "source": "Rad - 7in Spined Sleeve_3mm spine_45x426mm_Obi Strip.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-gatefold-outer.pdf",
+  "product_size": "12\"",
+  "print_type": "Gatefold – Outer",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Gatefolder 7mm.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/10in-printed-inner-sleeve-side-opener.pdf",
+  "product_size": "10\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "Side Opener",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Inner Sleeve 10 Inch Side Opener.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/10in-printed-inner-sleeve-top-opener.pdf",
+  "product_size": "10\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "Top Opener",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Inner Sleeve 10 Inch Top Opener.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-printed-inner-sleeve-top-opener-centre-holes.pdf",
+  "product_size": "12\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "Top Opener – Centre Holes",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Inner Sleeve 12 Inch 100mm ML Top Opener.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-printed-inner-sleeve-side-opener-centre-holes.pdf",
+  "product_size": "12\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "Side Opener – Centre Holes",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Inner Sleeve 12 Inch ML Side Opener.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-printed-inner-sleeve-side-opener.pdf",
+  "product_size": "12\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "Side Opener",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Inner Sleeve 12 Inch Side Opener.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-printed-inner-sleeve-top-opener.pdf",
+  "product_size": "12\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "Top Opener",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Inner Sleeve 12 Inch Top Opener.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/7in-printed-inner-sleeve.pdf",
+  "product_size": "7\"",
+  "print_type": "Printed Inner Sleeve",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Inner Sleeve 7 Inch 180.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-centre-label.pdf",
+  "product_size": "12\"",
+  "print_type": "Centre Label",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 2,
+  "source": "Voit - Labels 100mm.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-outer-sleeve-3mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Outer Sleeve 12 Inch 3mm.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-outer-sleeve-4mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 4mm Spine",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Outer Sleeve 12 Inch 4mm.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/12in-outer-sleeve-5mm-spine.pdf",
+  "product_size": "12\"",
+  "print_type": "Outer Sleeve – 5mm Spine",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Outer Sleeve 12 Inch 5mm.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/7in-outer-sleeve-spineless.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – Spineless",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Single 7 Inch 185.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/7in-outer-sleeve-3mm-spine.pdf",
+  "product_size": "7\"",
+  "print_type": "Outer Sleeve – 3mm Spine",
+  "variant": "",
+  "bleed_mm": 5.0,
+  "safe_margin_mm": 5,
+  "source": "Voit - Single 7 Inch 185mR3.pdf"
+ },
+ {
+  "supplier": "Voit",
+  "file": "voit/7in-centre-label.pdf",
+  "product_size": "7\"",
+  "print_type": "Centre Label",
+  "variant": "",
+  "bleed_mm": 3.0,
+  "safe_margin_mm": 2,
+  "source": "Voit - Single Label 92mm.pdf"
+ }
+]
