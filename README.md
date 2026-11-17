@@ -53,12 +53,19 @@ Job Ticket (Project) ──► Artwork Proof ──► one row per print item (p
 ```
 
 * **One screen.** Everything happens on the **Artwork Proof**. Creating one for a Job Ticket automatically adds every print item on its Sales Order, including print parts inside the default BOMs of the ordered records (sleeves and labels usually sit in the BOM). You can also use *Actions → Get Print Items from Sales Order*, or add rows by hand; the item picker only shows Print items.
-* **Print spec lives on the Item.** Print items (Item Group *Print* or its sub-groups) get an *Artwork / Print Spec* section; other items don't see it. In it:
-  * **Print Template**: pick a readable template such as *Takt – 12" Outer Sleeve – 3mm Spine*. The template carries the supplier, size, template PDF and packing category, and the Item's **Print Supplier** and milomrp's **Packing Component** are filled in from it automatically.
-  * **Finish**, **Convert Fonts to Outlines**, and the **Print Upgrades** (Spot UV, foil… and how each is supplied).
+* **The print spec lives on the Item.** Print items (Item Group *Print* or its sub-groups) get a *Print Spec* section; other items don't see it. You fill in:
+  * Print Supplier, Product Size, Print Type
+  * Board / Paper Stock, Print Colours
+  * Finish (gloss / matt / reverse board / uncoated, which picks the colour profile)
+  * Lamination / Varnish, Print Upgrades (Spot UV, foil… and how each is supplied), Notes for Supplier
 
-  Set it once and represses reuse it automatically. A row whose Item is incomplete shows **Needs Setup** with a message saying what's missing.
-* **Packing Component (milomrp).** It's hidden on print items, because it comes from the Print Template's print type (Outer Sleeve, Inner Sleeve, Insert, Sticker, Difficult Sticker; blank for centre labels). Non-print items (discs, shrink film, polybags) keep the normal Packing Component dropdown.
+  When you fill these in or save:
+  * the **Supplier Template** is matched automatically from supplier + size + print type
+  * milomrp's **Packing Component** is set from the print type (and hidden on print items)
+  * the Item **Description** is rebuilt, e.g. *12" Outer Sleeve – 3mm Spine · 350gsm GC1 Board · 4/0 CMYK · Matt finish · Matt Lamination · Spot UV, Hot Foil Gold*. That description is what appears on Purchase Orders and everywhere else.
+
+  The Artwork module reads everything from the Item. A proof row whose Item is incomplete, or has no template for its combination, shows **Needs Setup** with what's missing. Stocks, print colours and laminations are editable lists (each has an optional "Text in Item Description").
+* **Packing Component (milomrp).** Non-print items (discs, shrink film, polybags) keep the normal Packing Component dropdown.
 * **Spine or no spine** is set on the **Print Type**. Spineless types (spineless sleeves, labels, stickers, inserts) centre the artwork on the trim; spine types align the artwork's spine to the template's.
 * **Finish masks.** If an upgrade is supplied as a *Separate file*, the proof adds a mask row for it automatically (staff or the customer upload the black-only file there).
 * Dropping artwork into a row (or changing its page, nudge or mask) saves the proof and queues just that row. Each row shows its preview, status, warnings and files under the table.
@@ -96,11 +103,11 @@ Python deps (`pikepdf`, `PyMuPDF`, `numpy`, `Pillow`) install automatically from
    * `ISOcoated_v2_300_eci.icc` from eci.org (ECI offset profiles package).
    * `EuroscaleUncoated.icc` ships with Adobe Creative Cloud.
 2. **Product Sizes and Print Types.** 7", 10", 12" and common print types are seeded. Add your own (e.g. *Gatefold – 7mm Spine*); tick **No Spine** on spineless types and set the **Packing Component** each type counts as.
-3. **Artwork Supplier Template.** One per product a supplier makes: pick the supplier, product size and print type (leave the name blank to get e.g. *Takt – 12" Outer Sleeve – 3mm Spine*), then:
+3. **Artwork Supplier Template.** One per product a supplier makes, and only one enabled per supplier + size + print type. Pick the supplier, product size and print type (leave the name blank to get e.g. *Takt – 12" Outer Sleeve – 3mm Spine*), then:
    * attach the supplier PDF and click **Detect Geometry**
    * check the trim size, bleed and spine width (set *Spine Centre Override* if detection misses)
 4. **Item Group "Print".** Created on install as a normal item group, so you can pick it on Items. If you want sub-groups (Print › Labels, Print › Sleeves), tick *Is Group* on Print, create the sub-groups, and put the SKUs in those; sub-groups count as print items too. You can use a different group in Artwork Settings.
-5. **Each print Item.** Pick its **Print Template** and **Finish** (and any upgrades) in the *Artwork / Print Spec* section.
+5. **Each print Item.** Fill in its *Print Spec*. The description, template and packing component follow automatically.
 6. **Artwork Print Upgrade.** Six are seeded. Edit the aliases to match how your customers name spots.
 7. **Artwork Settings.** Set the limits, template spot name, proof logo, header colour and email texts.
 8. **Roles.** Give staff the **Artwork User** role; template, profile and settings admins need **Artwork Manager**.

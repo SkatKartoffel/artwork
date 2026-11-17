@@ -201,3 +201,17 @@ def template_summary(template: str):
 	t = frappe.db.get_value("Artwork Supplier Template", template,
 		["supplier", "product_size", "print_type", "packing_component", "no_spine"], as_dict=True) or {}
 	return t
+
+
+@frappe.whitelist()
+def print_spec_preview(doc):
+	"""Live preview on the Item form: matched template, packing component and description."""
+	import json
+
+	from artwork.item_hooks import apply_print_spec
+
+	frappe.has_permission("Item", "read", throw=True)
+	d = frappe.get_doc(json.loads(doc) if isinstance(doc, str) else doc)
+	apply_print_spec(d)
+	return {"artwork_template": d.artwork_template, "packing_component": d.get("packing_component"),
+		"description": d.description}

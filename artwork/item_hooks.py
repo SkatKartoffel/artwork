@@ -1,20 +1,59 @@
 import frappe
 
 
+def escape_html(text: str) -> str:
+	"""Escape only what breaks HTML; keep inch marks (12") readable."""
+	return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def item_validate(doc, method=None):
-	"""Print items: flag them, and copy supplier + packing component from the chosen Print Template."""
+	"""Print items: flag them, match the supplier template, set packing component and rebuild the Description."""
 	meta = frappe.get_meta("Item")
 	if not meta.has_field("is_print_item"):
 		return
 	from artwork.processing import print_groups
 
 	doc.is_print_item = 1 if doc.item_group in print_groups() else 0
-	if not doc.is_print_item or not doc.get("artwork_template"):
+	if not doc.is_print_item:
 		return
-	tpl = frappe.db.get_value("Artwork Supplier Template", doc.artwork_template, ["supplier", "print_type"], as_dict=True)
-	if not tpl:
-		return
-	doc.artwork_supplier = tpl.supplier
-	if meta.has_field("packing_component"):
-		packing = frappe.db.get_value("Artwork Print Type", tpl.print_type, "packing_component") if tpl.print_type else None
-		doc.packing_component = packing or None
+	apply_print_spec(doc, meta)
+
+
+def apply_print_spec(doc, meta=None):
+	from artwork.processing import item_template
+
+	meta = meta or frappe.get_meta("Item")
+	doc.artwork_template = item_template(doc)
+	if meta.has_field("packing_component") and doc.get("artwork_print_type"):
+		doc.packing_component = frappe.db.get_value("Artwork Print Type", doc.artwork_print_type, "packing_component") or None
+	text = spec_description(doc)
+	if text:
+		doc.description = text
+	return doc
+
+
+def _label(doctype, name):
+	if not name:
+		return None
+	return frappe.db.get_value(doctype, name, "description_text") or name
+
+
+def spec_description(doc) -> str:
+	"""e.g. 12" Outer Sleeve – 3mm Spine · 350gsm GC1 Board · 4/0 CMYK · Matt finish · Matt Lamination ·
+	Spot UV, Hot Foil Gold · <notes>"""
+	product = " ".join(filter(None, [doc.get("artwork_product_size"), doc.get("artwork_print_type")]))
+	parts = [
+		product,
+		_label("Artwork Stock", doc.get("artwork_stock")),
+		_label("Artwork Print Colour", doc.get("artwork_print_colours")),
+		f"{doc.artwork_finish} finish" if doc.get("artwork_finish") else None,
+		_label("Artwork Coating", doc.get("artwork_coating")),
+		", ".join(u.upgrade for u in doc.get("artwork_upgrades") or [] if u.upgrade) or None,
+	]
+	line = " · ".join(escape_html(p) for p in parts if p)
+	if not line:
+		return ""
+	notes = (doc.get("artwork_notes") or "").strip()
+	if notes:
+		line += "<br>" + escape_html(notes).replace("\n", "<br>")
+	return line

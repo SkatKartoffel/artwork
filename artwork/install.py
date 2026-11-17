@@ -16,28 +16,46 @@ CUSTOM_FIELDS = {
 	],
 	"Item": [
 		dict(fieldname="is_print_item", label="Print Item", fieldtype="Check", insert_after="item_group",
-			read_only=1, hidden=1, no_copy=0, description="Set automatically from the Item Group (Print and its sub-groups)."),
-		dict(fieldname="artwork_section", label="Artwork / Print Spec", fieldtype="Section Break", insert_after="description",
-			collapsible=0, depends_on="eval:doc.is_print_item",
-			description="Print parts only. Used when this item appears on an Artwork Proof."),
-		dict(fieldname="artwork_template", label="Print Template", fieldtype="Link",
-			options="Artwork Supplier Template", insert_after="artwork_section",
-			description="e.g. Takt – 12\" Outer Sleeve – 3mm Spine. Sets the supplier, artwork template and packing component."),
+			read_only=1, hidden=1, description="Set automatically from the Item Group (Print and its sub-groups)."),
+		dict(fieldname="artwork_section", label="Print Spec", fieldtype="Section Break", insert_after="description",
+			depends_on="eval:doc.is_print_item",
+			description="Print parts only. Fills in the Description, the supplier template and the packing component on save."),
 		dict(fieldname="artwork_supplier", label="Print Supplier", fieldtype="Link", options="Supplier",
-			insert_after="artwork_template", read_only=1, fetch_from="artwork_template.supplier"),
+			insert_after="artwork_section"),
+		dict(fieldname="artwork_product_size", label="Product Size", fieldtype="Link", options="Artwork Product Size",
+			insert_after="artwork_supplier"),
+		dict(fieldname="artwork_print_type", label="Print Type", fieldtype="Link", options="Artwork Print Type",
+			insert_after="artwork_product_size"),
+		dict(fieldname="artwork_stock", label="Board / Paper Stock", fieldtype="Link", options="Artwork Stock",
+			insert_after="artwork_print_type"),
+		dict(fieldname="artwork_print_colours", label="Print Colours", fieldtype="Link", options="Artwork Print Colour",
+			insert_after="artwork_stock"),
+		dict(fieldname="artwork_cb1", fieldtype="Column Break", insert_after="artwork_print_colours"),
 		dict(fieldname="artwork_finish", label="Finish", fieldtype="Link", options="Artwork Finish",
-			insert_after="artwork_supplier", description="Gloss / Matt → ISO Coated v2 300%; Reverse Board / Uncoated → Euroscale Uncoated v2"),
-		dict(fieldname="artwork_outline_fonts", label="Convert Fonts to Outlines", fieldtype="Check", default="1",
+			insert_after="artwork_cb1",
+			description="Gloss / Matt → ISO Coated v2 300%; Reverse Board / Uncoated → Euroscale Uncoated v2"),
+		dict(fieldname="artwork_coating", label="Lamination / Varnish", fieldtype="Link", options="Artwork Coating",
 			insert_after="artwork_finish"),
-		dict(fieldname="artwork_cb", fieldtype="Column Break", insert_after="artwork_outline_fonts"),
+		dict(fieldname="artwork_outline_fonts", label="Convert Fonts to Outlines", fieldtype="Check", default="1",
+			insert_after="artwork_coating"),
+		dict(fieldname="artwork_template", label="Matched Supplier Template", fieldtype="Link",
+			options="Artwork Supplier Template", insert_after="artwork_outline_fonts", read_only=1, no_copy=1,
+			description="Picked automatically from Print Supplier + Product Size + Print Type."),
+		dict(fieldname="artwork_upgrades_sb", fieldtype="Section Break", insert_after="artwork_template",
+			depends_on="eval:doc.is_print_item"),
+		dict(fieldname="artwork_upgrades", label="Print Upgrades (Spot UV, foil…)", fieldtype="Table",
+			options="Artwork Item Upgrade", insert_after="artwork_upgrades_sb"),
+		dict(fieldname="artwork_notes", label="Notes for Supplier", fieldtype="Small Text", insert_after="artwork_upgrades",
+			description="Added to the end of the Description."),
+		dict(fieldname="artwork_approved_sb", label="Approved Artwork", fieldtype="Section Break",
+			insert_after="artwork_notes", collapsible=1, depends_on="eval:doc.is_print_item"),
 		dict(fieldname="approved_artwork", label="Approved Print-Ready Artwork", fieldtype="Attach",
-			insert_after="artwork_cb", read_only=1, no_copy=1),
+			insert_after="artwork_approved_sb", read_only=1, no_copy=1),
+		dict(fieldname="artwork_cb2", fieldtype="Column Break", insert_after="approved_artwork"),
 		dict(fieldname="approved_artwork_proof", label="Approved On Proof", fieldtype="Link", options="Artwork Proof",
-			insert_after="approved_artwork", read_only=1, no_copy=1),
+			insert_after="artwork_cb2", read_only=1, no_copy=1),
 		dict(fieldname="artwork_approved_on", label="Artwork Approved On", fieldtype="Date",
 			insert_after="approved_artwork_proof", read_only=1, no_copy=1),
-		dict(fieldname="artwork_upgrades", label="Print Upgrades (Spot UV, foil…)", fieldtype="Table",
-			options="Artwork Item Upgrade", insert_after="artwork_approved_on"),
 	],
 }
 
@@ -56,6 +74,12 @@ PRINT_TYPES = [  # (name, no spine, packing component used by milomrp's packing-
 	("Poster", 1, "Insert"),
 	("Obi Strip", 1, "Insert"),
 ]
+
+STOCKS = ["350gsm GC1 Board", "300gsm GC1 Board", "350gsm Reverse Board", "300gsm Uncoated Board",
+	"170gsm Silk Paper", "150gsm Gloss Paper", "120gsm Uncoated Paper", "Self-adhesive Paper"]
+PRINT_COLOURS = ["4/0 CMYK", "4/4 CMYK", "4/1 CMYK + Black", "1/0 Black", "1/1 Black", "Unprinted"]
+COATINGS = ["Gloss Lamination", "Matt Lamination", "Soft-touch Lamination", "Gloss Varnish", "Matt Varnish",
+	"Aqueous Coating"]
 
 PROFILES = [
 	{"profile_name": "ISO Coated v2 300% (ECI)", "max_ink": 300, "output_condition": "ISO Coated v2 300% (ECI)",
@@ -114,8 +138,17 @@ def seed_sizes_and_types():
 			frappe.db.set_value("Artwork Print Type", name, "packing_component", packing)
 
 
+def seed_spec_lists():
+	for dt, field, values in (("Artwork Stock", "stock_name", STOCKS),
+			("Artwork Print Colour", "print_colour_name", PRINT_COLOURS), ("Artwork Coating", "coating_name", COATINGS)):
+		for v in values:
+			if not frappe.db.exists(dt, v):
+				frappe.get_doc({"doctype": dt, field: v}).insert(ignore_permissions=True)
+
+
 def seed_masters():
 	seed_sizes_and_types()
+	seed_spec_lists()
 	for p in PROFILES:
 		if not frappe.db.exists("Artwork Colour Profile", p["profile_name"]):
 			doc = frappe.get_doc({"doctype": "Artwork Colour Profile", **p})

@@ -23,6 +23,13 @@ class ArtworkSupplierTemplate(Document):
 			self.no_spine = frappe.db.get_value("Artwork Print Type", self.print_type, "no_spine") or 0
 		if self.print_type:
 			self.packing_component = frappe.db.get_value("Artwork Print Type", self.print_type, "packing_component")
+		if self.enabled and self.supplier and self.product_size and self.print_type:
+			clash = frappe.db.get_value("Artwork Supplier Template", {"supplier": self.supplier,
+				"product_size": self.product_size, "print_type": self.print_type, "enabled": 1,
+				"name": ["!=", self.name]}, "name")
+			if clash:
+				frappe.throw(_("{0} is already the enabled template for {1} · {2} · {3}. Disable one of them.").format(
+					clash, self.supplier, self.product_size, self.print_type))
 		if self.has_value_changed("template_file") or self.has_value_changed("template_page"):
 			self.flags.redetect = True
 
