@@ -298,6 +298,71 @@ class ArtworkProof(Document):
 		self.add_log("Cancelled")
 		self.save()
 
+	# ------------------------------------------------------------------ purchase orders
+	@frappe.whitelist()
+	def po_suppliers(self):
+		"""Print suppliers on this proof, their items and any existing Purchase Orders."""
+		out = {}
+		for r in self.items:
+			sup = frappe.db.get_value("Item", r.item, "artwork_supplier")
+			if not sup:
+				continue
+			out.setdefault(sup, {"supplier": sup, "items": [], "existing": []})["items"].append(r.item)
+		for sup, d in out.items():
+			d["existing"] = frappe.get_all("Purchase Order", filters={"artwork_proof": self.name, "supplier": sup,
+				"docstatus": ["<", 2]}, pluck="name")
+		missing = [r.item for r in self.items if not frappe.db.get_value("Item", r.item, "artwork_supplier")]
+		return {"suppliers": list(out.values()), "no_supplier": missing}
+
+	@frappe.whitelist()
+	def make_purchase_order(self, supplier):
+		"""An unsaved Purchase Order for this supplier's print items – staff add quantities and prices."""
+		frappe.has_permission("Purchase Order", "create", throw=True)
+		items = [r for r in self.items if frappe.db.get_value("Item", r.item, "artwork_supplier") == supplier]
+		if not items:
+			frappe.throw(_("No print items on this proof use supplier {0}.").format(supplier))
+		company = (frappe.db.get_value("Project", self.project, "company") if self.project else None) \
+			or frappe.defaults.get_user_default("Company") or frappe.db.get_single_value("Global Defaults", "default_company")
+		schedule = (frappe.db.get_value("Sales Order", self.sales_order, "delivery_date") if self.sales_order else None) \
+			or frappe.utils.add_days(nowdate(), 14)
+		po = frappe.new_doc("Purchase Order")
+		po.supplier = supplier
+		po.company = company
+		po.project = self.project
+		po.artwork_proof = self.name
+		po.transaction_date = nowdate()
+		po.schedule_date = schedule
+		for r in items:
+			it = frappe.db.get_value("Item", r.item, ["item_name", "description", "stock_uom"], as_dict=True) or {}
+			po.append("items", {
+				"item_code": r.item,
+				"item_name": it.get("item_name"),
+				"description": it.get("description") or it.get("item_name"),
+				"uom": it.get("stock_uom"),
+				"stock_uom": it.get("stock_uom"),
+				"conversion_factor": 1,
+				"schedule_date": schedule,
+				"project": self.project,
+				"sales_order": self.sales_order,
+				"qty": 0,
+				"rate": 0,
+			})
+		try:  # let ERPNext fill currency, price list, warehouse etc. where it can
+			po.set_missing_values()
+			for d in po.items:
+				d.qty = 0
+				d.rate = 0
+		except Exception:
+			frappe.clear_messages()
+		return po.as_dict()
+
+	def attach_print_files_to_pos(self):
+		"""Attach each supplier's approved print-ready PDFs to their Purchase Order(s)."""
+		pos = frappe.get_all("Purchase Order", filters={"artwork_proof": self.name, "docstatus": ["<", 2]},
+			fields=["name", "supplier"])
+		for po in pos:
+			attach_print_files(po.name, po.supplier, self)
+
 	# ------------------------------------------------------------------ customer responses
 	def customer_approve(self, by_name, comment=None):
 		self.status = "Approved"
@@ -318,6 +383,7 @@ class ArtworkProof(Document):
 					"approved_artwork_proof": self.name,
 					"artwork_approved_on": nowdate(),
 				}, update_modified=False)
+		self.attach_print_files_to_pos()
 		self._timeline(_("Artwork proof {0} rev {1} approved by {2}").format(self.name, self.revision, by_name))
 		self._notify_staff(_("Artwork approved: {0}").format(self.title or self.name), comment)
 		for fn in frappe.get_hooks("artwork_on_approve"):
@@ -358,6 +424,37 @@ class ArtworkProof(Document):
 	def _check_unlocked(self):
 		if self.status in LOCKED_STATUSES:
 			frappe.throw(_("Proof is {0}. Use New Revision to make changes.").format(self.status))
+
+
+# ---------------------------------------------------------------------- purchase orders
+def attach_print_files(po_name, supplier, proof):
+	"""Copy approved print PDFs for this supplier's items onto the PO (skips ones already there)."""
+	from artwork.processing import file_path
+
+	existing = set(frappe.get_all("File", filters={"attached_to_doctype": "Purchase Order",
+		"attached_to_name": po_name}, pluck="file_name"))
+	for r in proof.items:
+		if not r.print_file or frappe.db.get_value("Item", r.item, "artwork_supplier") != supplier:
+			continue
+		path = file_path(r.print_file)
+		fname = f"{r.item}-print-ready-rev{cint(proof.revision) or 1}.pdf".replace("/", "-")
+		if not path or fname in existing:
+			continue
+		with open(path, "rb") as fh:
+			f = frappe.get_doc({"doctype": "File", "file_name": fname, "attached_to_doctype": "Purchase Order",
+				"attached_to_name": po_name, "is_private": 1, "content": fh.read()})
+		f.flags.ignore_file_validate = True
+		f.insert(ignore_permissions=True)
+
+
+def purchase_order_after_insert(doc, method=None):
+	"""A PO raised from an already-approved proof gets the print files straight away."""
+	if not doc.get("artwork_proof"):
+		return
+	proof = frappe.get_doc("Artwork Proof", doc.artwork_proof)
+	if proof.status == "Approved":
+		attach_print_files(doc.name, doc.supplier, proof)
+	proof.add_comment("Info", _("Purchase Order {0} created for {1}").format(doc.name, doc.supplier))
 
 
 # ---------------------------------------------------------------------- print items

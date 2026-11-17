@@ -1,8 +1,8 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2026-11-17 16:30:00.000000",
- "modified": "2026-11-17 16:30:00.000000",
+ "creation": "2026-11-17 16:45:00.000000",
+ "modified": "2026-11-17 16:45:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "module": "Artwork",
@@ -261,7 +261,13 @@
  "index_web_pages_for_search": 0,
  "istable": 0,
  "issingle": 0,
- "links": [],
+ "links": [
+  {
+   "link_doctype": "Purchase Order",
+   "link_fieldname": "artwork_proof",
+   "group": "Purchasing"
+  }
+ ],
  "permissions": [
   {
    "role": "System Manager",

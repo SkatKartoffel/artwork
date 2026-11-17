@@ -4,6 +4,10 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 ROLES = ("Artwork Manager", "Artwork User")
 
 CUSTOM_FIELDS = {
+	"Purchase Order": [
+		dict(fieldname="artwork_proof", label="Artwork Proof", fieldtype="Link", options="Artwork Proof",
+			insert_after="supplier", read_only=1, no_copy=1, search_index=1),
+	],
 	"Project": [
 		dict(fieldname="artwork_status", label="Artwork Status", fieldtype="Select",
 			options="\nAwaiting Artwork\nIn Proofing\nSent to Customer\nChanges Requested\nApproved",

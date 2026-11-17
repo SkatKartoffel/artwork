@@ -52,6 +52,9 @@ frappe.ui.form.on("Artwork Proof", {
 		}
 		frm.add_custom_button(__("Copy Approval Link"), () => frm.events.copy_link(frm, "artwork_approval"), __("Customer Links"));
 		frm.add_custom_button(__("Copy Upload Link"), () => frm.events.copy_link(frm, "artwork_upload"), __("Customer Links"));
+		if (frm.doc.items && frm.doc.items.length) {
+			frm.add_custom_button(__("Purchase Order"), () => frm.events.create_po(frm), __("Create"));
+		}
 		if (frm.doc.project) frm.add_custom_button(__("Job Ticket"), () => frappe.set_route("Form", "Project", frm.doc.project), __("View"));
 		if (frm.doc.proof_pdf) frm.add_custom_button(__("Combined Proof PDF"), () => window.open(frm.doc.proof_pdf), __("View"));
 	},
@@ -66,6 +69,47 @@ frappe.ui.form.on("Artwork Proof", {
 		}[method];
 		if (msg) frappe.show_alert({ message: msg(r.message), indicator: "blue" });
 		frm.reload_doc();
+	},
+
+	// One Purchase Order per print supplier, opened unsaved so staff add quantities and prices.
+	async create_po(frm) {
+		if (frm.is_dirty()) await frm.save();
+		const d = (await frm.call("po_suppliers")).message;
+		if (!d.suppliers.length) {
+			frappe.msgprint(__("Set a <b>Print Supplier</b> on the print items first: {0}", [d.no_supplier.join(", ")]));
+			return;
+		}
+		if (d.no_supplier.length) {
+			frappe.show_alert({ message: __("No Print Supplier set on {0} – not included", [d.no_supplier.join(", ")]), indicator: "orange" });
+		}
+		const open = async (supplier) => {
+			const src = (await frm.call("make_purchase_order", { supplier })).message;
+			frappe.model.with_doctype("Purchase Order", () => {
+				const skip = new Set(["name", "idx", "doctype", "owner", "creation", "modified", "modified_by", "docstatus",
+					"parent", "parentfield", "parenttype", "__islocal", "__unsaved"]);
+				const po = frappe.model.get_new_doc("Purchase Order");
+				Object.keys(src).forEach((k) => {
+					if (!skip.has(k) && !Array.isArray(src[k]) && src[k] !== null && src[k] !== undefined) po[k] = src[k];
+				});
+				(src.items || []).forEach((it) => {
+					const row = frappe.model.add_child(po, "items");
+					Object.keys(it).forEach((k) => { if (!skip.has(k) && it[k] !== null && it[k] !== undefined) row[k] = it[k]; });
+				});
+				frappe.set_route("Form", "Purchase Order", po.name);
+				frappe.show_alert({ message: __("Add quantities and prices, then save"), indicator: "blue" });
+			});
+		};
+		const go = (s) => s.existing.length
+			? frappe.confirm(__("{0} already has {1} for this proof. Create another?", [s.supplier, s.existing.join(", ")]),
+				() => open(s.supplier))
+			: open(s.supplier);
+		if (d.suppliers.length === 1) return go(d.suppliers[0]);
+		frappe.prompt({
+			fieldname: "supplier", fieldtype: "Select", label: __("Supplier"), reqd: 1,
+			options: d.suppliers.map((s) => s.supplier),
+			description: d.suppliers.map((s) => `<b>${frappe.utils.escape_html(s.supplier)}</b>: ${s.items.join(", ")}`
+				+ (s.existing.length ? ` (${__("already")}: ${s.existing.join(", ")})` : "")).join("<br>"),
+		}, (v) => go(d.suppliers.find((s) => s.supplier === v.supplier)), __("Create Purchase Order for"), __("Create"));
 	},
 
 	copy_link(frm, page) {
