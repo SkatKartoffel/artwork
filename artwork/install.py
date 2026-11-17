@@ -17,7 +17,9 @@ CUSTOM_FIELDS = {
 	"Item": [
 		dict(fieldname="is_print_item", label="Print Item", fieldtype="Check", insert_after="item_group",
 			read_only=1, hidden=1, description="Set automatically from the Item Group (Print and its sub-groups)."),
-		dict(fieldname="artwork_section", label="Print Spec", fieldtype="Section Break", insert_after="description",
+		dict(fieldname="artwork_tab", label="Print Spec", fieldtype="Tab Break", insert_after="description",
+			depends_on="eval:doc.is_print_item"),
+		dict(fieldname="artwork_section", label="Print Spec", fieldtype="Section Break", insert_after="artwork_tab",
 			depends_on="eval:doc.is_print_item",
 			description="Print parts only. Fills in the Description, the supplier template and the packing component on save."),
 		dict(fieldname="artwork_supplier", label="Print Supplier", fieldtype="Link", options="Supplier",
