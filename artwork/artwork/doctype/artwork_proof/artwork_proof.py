@@ -10,8 +10,9 @@ from artwork.processing import (
 	OUTPUT_FIELDS,
 	enqueue_proof,
 	is_print_item,
+	item_template,
 	print_groups,
-	resolve_template,
+	print_supplier,
 	row_signature,
 	settings,
 )
@@ -69,11 +70,9 @@ class ArtworkProof(Document):
 			if groups and not is_print_item(row.item):
 				frappe.throw(_("Row {0}: {1} is not in the {2} item group.").format(
 					row.idx, row.item, settings().print_item_group or "Print"))
-			spec = frappe.db.get_value("Item", row.item, ["artwork_supplier", "artwork_product_size",
-				"artwork_print_type", "artwork_finish"], as_dict=True) or {}
-			row.supplier_template = resolve_template(spec.get("artwork_supplier"), spec.get("artwork_product_size"),
-				spec.get("artwork_print_type"))
-			row.finish = spec.get("artwork_finish")
+			item = frappe.get_cached_doc("Item", row.item)
+			row.supplier_template = item_template(item)
+			row.finish = item.get("artwork_finish")
 
 	def sync_masks(self):
 		"""One mask row per print item whose upgrade is supplied as a separate file."""
@@ -304,21 +303,21 @@ class ArtworkProof(Document):
 		"""Print suppliers on this proof, their items and any existing Purchase Orders."""
 		out = {}
 		for r in self.items:
-			sup = frappe.db.get_value("Item", r.item, "artwork_supplier")
+			sup = print_supplier(frappe.get_cached_doc("Item", r.item))
 			if not sup:
 				continue
 			out.setdefault(sup, {"supplier": sup, "items": [], "existing": []})["items"].append(r.item)
 		for sup, d in out.items():
 			d["existing"] = frappe.get_all("Purchase Order", filters={"artwork_proof": self.name, "supplier": sup,
 				"docstatus": ["<", 2]}, pluck="name")
-		missing = [r.item for r in self.items if not frappe.db.get_value("Item", r.item, "artwork_supplier")]
+		missing = [r.item for r in self.items if not print_supplier(frappe.get_cached_doc("Item", r.item))]
 		return {"suppliers": list(out.values()), "no_supplier": missing}
 
 	@frappe.whitelist()
 	def make_purchase_order(self, supplier):
 		"""An unsaved Purchase Order for this supplier's print items – staff add quantities and prices."""
 		frappe.has_permission("Purchase Order", "create", throw=True)
-		items = [r for r in self.items if frappe.db.get_value("Item", r.item, "artwork_supplier") == supplier]
+		items = [r for r in self.items if print_supplier(frappe.get_cached_doc("Item", r.item)) == supplier]
 		if not items:
 			frappe.throw(_("No print items on this proof use supplier {0}.").format(supplier))
 		company = (frappe.db.get_value("Project", self.project, "company") if self.project else None) \
@@ -434,7 +433,7 @@ def attach_print_files(po_name, supplier, proof):
 	existing = set(frappe.get_all("File", filters={"attached_to_doctype": "Purchase Order",
 		"attached_to_name": po_name}, pluck="file_name"))
 	for r in proof.items:
-		if not r.print_file or frappe.db.get_value("Item", r.item, "artwork_supplier") != supplier:
+		if not r.print_file or print_supplier(frappe.get_cached_doc("Item", r.item)) != supplier:
 			continue
 		path = file_path(r.print_file)
 		fname = f"{r.item}-print-ready-rev{cint(proof.revision) or 1}.pdf".replace("/", "-")

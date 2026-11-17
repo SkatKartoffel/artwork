@@ -19,10 +19,23 @@ def item_validate(doc, method=None):
 	apply_print_spec(doc, meta)
 
 
+def erpnext_supplier(doc):
+	"""The supplier set in ERPNext's own fields (Item Defaults, then the Purchasing tab's Supplier Items)."""
+	for d in doc.get("item_defaults") or []:
+		if d.get("default_supplier"):
+			return d.default_supplier
+	for s in doc.get("supplier_items") or []:
+		if s.get("supplier"):
+			return s.supplier
+	return None
+
+
 def apply_print_spec(doc, meta=None):
 	from artwork.processing import item_template
 
 	meta = meta or frappe.get_meta("Item")
+	if not doc.get("artwork_supplier"):
+		doc.artwork_supplier = erpnext_supplier(doc)
 	doc.artwork_template = item_template(doc)
 	if meta.has_field("packing_component") and doc.get("artwork_print_type"):
 		doc.packing_component = frappe.db.get_value("Artwork Print Type", doc.artwork_print_type, "packing_component") or None

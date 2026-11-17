@@ -74,20 +74,31 @@ def resolve_template(supplier, product_size, print_type) -> str | None:
 		"print_type": print_type, "enabled": 1}, "name")
 
 
+def print_supplier(item_doc) -> str | None:
+	"""Print Supplier on the Print Spec, or else the supplier set in ERPNext's own Item fields."""
+	if item_doc.get("artwork_supplier"):
+		return item_doc.artwork_supplier
+	from artwork.item_hooks import erpnext_supplier
+
+	return erpnext_supplier(item_doc)
+
+
 def item_template(item_doc) -> str | None:
-	return resolve_template(item_doc.get("artwork_supplier"), item_doc.get("artwork_product_size"),
+	return resolve_template(print_supplier(item_doc), item_doc.get("artwork_product_size"),
 		item_doc.get("artwork_print_type"))
 
 
 def spec_problems(item_doc) -> list[str]:
 	out = []
-	missing = [label for field, label in (("artwork_supplier", _("Print Supplier")),
-		("artwork_product_size", _("Product Size")), ("artwork_print_type", _("Print Type"))) if not item_doc.get(field)]
+	supplier = print_supplier(item_doc)
+	missing = [label for ok, label in ((supplier, _("Print Supplier")),
+		(item_doc.get("artwork_product_size"), _("Product Size")), (item_doc.get("artwork_print_type"), _("Print Type")))
+		if not ok]
 	if missing:
 		out.append(_("no {0}").format(", ".join(missing)))
 	elif not item_template(item_doc):
 		out.append(_("no Supplier Template exists for {0} · {1} · {2} – create one").format(
-			item_doc.artwork_supplier, item_doc.artwork_product_size, item_doc.artwork_print_type))
+			supplier, item_doc.artwork_product_size, item_doc.artwork_print_type))
 	if not item_doc.get("artwork_finish"):
 		out.append(_("no Finish"))
 	else:
