@@ -6,3 +6,4 @@
 artwork.patches.remove_artwork_component
 artwork.patches.set_print_item_defaults
 artwork.patches.reload_artwork_workspace
+artwork.patches.print_group_selectable

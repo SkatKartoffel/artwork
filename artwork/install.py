@@ -108,5 +108,6 @@ def ensure_print_group():
 		or ("All Item Groups" if frappe.db.exists("Item Group", "All Item Groups") else None)
 	if not parent:
 		return
+	# Not a group node: ERPNext's Item form only lets you pick non-group item groups.
 	frappe.get_doc({"doctype": "Item Group", "item_group_name": "Print", "parent_item_group": parent,
-		"is_group": 1}).insert(ignore_permissions=True)
+		"is_group": 0}).insert(ignore_permissions=True)

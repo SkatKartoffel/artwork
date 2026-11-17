@@ -92,7 +92,7 @@ Python deps (`pikepdf`, `PyMuPDF`, `numpy`, `Pillow`) install automatically from
    * attach the supplier PDF and click **Detect Geometry**
    * check the trim size, bleed and spine width (set *Spine Centre Override* if detection misses)
    * use spine width 0 for labels and stickers
-3. **Item Group "Print".** Created on install. Put your print SKUs in it, or in sub-groups such as Print › Labels. You can use a different group in Artwork Settings.
+3. **Item Group "Print".** Created on install as a normal item group, so you can pick it on Items. If you want sub-groups (Print › Labels, Print › Sleeves), tick *Is Group* on Print, create the sub-groups, and put the SKUs in those; sub-groups count as print items too. You can use a different group in Artwork Settings.
 4. **Each print Item.** Fill in its *Artwork / Print Spec* section: template, finish and upgrades.
 5. **Artwork Print Upgrade.** Six are seeded. Edit the aliases to match how your customers name spots.
 6. **Artwork Settings.** Set the limits, template spot name, proof logo, header colour and email texts.
