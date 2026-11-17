@@ -81,8 +81,12 @@ def spec_problems(item_doc) -> list[str]:
 
 
 def row_signature(proof, row) -> str:
+	"""Short fingerprint of a row's inputs (file names can be long, so store a hash)."""
+	import hashlib
+
 	masks = sorted((m.upgrade, m.mask_file or "") for m in proof.get("masks") or [] if m.item == row.item)
-	return json.dumps([row.item, row.artwork_file, cint(row.artwork_page) or 1, flt(row.spine_offset_mm), masks])
+	raw = json.dumps([row.item, row.artwork_file, cint(row.artwork_page) or 1, flt(row.spine_offset_mm), masks])
+	return hashlib.sha1(raw.encode()).hexdigest()
 
 
 # --------------------------------------------------------------------------- queueing
