@@ -1,0 +1,391 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Component",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 0,
+ "field_order": [
+  "naming_series",
+  "artwork_proof",
+  "item",
+  "item_name",
+  "component_type",
+  "cb1",
+  "supplier",
+  "supplier_template",
+  "finish",
+  "colour_profile",
+  "cb2",
+  "processing_status",
+  "error_count",
+  "warning_count",
+  "approved",
+  "project",
+  "customer",
+  "sb_art",
+  "artwork_file",
+  "artwork_page",
+  "cb3",
+  "outline_fonts",
+  "keep_other_spots",
+  "cb4",
+  "auto_detect_spine",
+  "spine_offset_mm",
+  "sb_up",
+  "upgrades",
+  "sb_res",
+  "preview_html",
+  "sb_files",
+  "print_file",
+  "proof_file",
+  "preview_image",
+  "cb5",
+  "processed_on",
+  "alignment_info",
+  "ink_info",
+  "processing_error",
+  "sb_warn",
+  "warnings",
+  "report_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "ARTC-.YYYY.-.#####",
+   "default": "ARTC-.YYYY.-.#####",
+   "reqd": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "artwork_proof",
+   "fieldtype": "Link",
+   "label": "Artwork Proof",
+   "options": "Artwork Proof",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "SKU / Item",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "fetch_from": "item.item_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "component_type",
+   "fieldtype": "Select",
+   "label": "Component",
+   "options": "\nSleeve / Jacket\nWide-Spine Jacket\nGatefold Outer\nGatefold Inner\nPrinted Inner Sleeve\nCentre Label A\nCentre Label B\nSticker\nHype Sticker\nInsert\nPoster\nObi Strip\nBox / Slipcase\nDownload Card\nOther",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier_template",
+   "fieldtype": "Link",
+   "label": "Supplier Template",
+   "options": "Artwork Supplier Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "finish",
+   "fieldtype": "Link",
+   "label": "Finish",
+   "options": "Artwork Finish",
+   "reqd": 1
+  },
+  {
+   "fieldname": "colour_profile",
+   "fieldtype": "Link",
+   "label": "Colour Profile",
+   "options": "Artwork Colour Profile",
+   "fetch_from": "finish.colour_profile",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "processing_status",
+   "fieldtype": "Select",
+   "label": "Processing",
+   "options": "Not Processed\nQueued\nProcessing\nProcessed\nFailed",
+   "default": "Not Processed",
+   "read_only": 1,
+   "in_list_view": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "error_count",
+   "fieldtype": "Int",
+   "label": "Errors",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "warning_count",
+   "fieldtype": "Int",
+   "label": "Warnings",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "approved",
+   "fieldtype": "Check",
+   "label": "Approved",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Job Ticket",
+   "options": "Project",
+   "fetch_from": "artwork_proof.project",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "fetch_from": "artwork_proof.customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_art",
+   "fieldtype": "Section Break",
+   "label": "Customer Artwork"
+  },
+  {
+   "fieldname": "artwork_file",
+   "fieldtype": "Attach",
+   "label": "Artwork File",
+   "description": "PDF (preferred), AI, EPS, TIFF, JPG or PNG"
+  },
+  {
+   "fieldname": "artwork_page",
+   "fieldtype": "Int",
+   "label": "Artwork Page",
+   "default": "1"
+  },
+  {
+   "fieldname": "cb3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "outline_fonts",
+   "fieldtype": "Check",
+   "label": "Convert Fonts to Outlines",
+   "default": "1"
+  },
+  {
+   "fieldname": "keep_other_spots",
+   "fieldtype": "Check",
+   "label": "Keep Other Spot Colours (don't convert Pantones to CMYK)",
+   "default": "0"
+  },
+  {
+   "fieldname": "cb4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "auto_detect_spine",
+   "fieldtype": "Check",
+   "label": "Find Spine from Customer Dieline",
+   "default": "1"
+  },
+  {
+   "fieldname": "spine_offset_mm",
+   "fieldtype": "Float",
+   "label": "Manual Spine Nudge (mm)",
+   "description": "+ moves the artwork's spine reference right."
+  },
+  {
+   "fieldname": "sb_up",
+   "fieldtype": "Section Break",
+   "label": "Print Upgrades (spot layers)"
+  },
+  {
+   "fieldname": "upgrades",
+   "fieldtype": "Table",
+   "label": "Upgrades",
+   "options": "Artwork Component Upgrade"
+  },
+  {
+   "fieldname": "sb_res",
+   "fieldtype": "Section Break",
+   "label": "Proof"
+  },
+  {
+   "fieldname": "preview_html",
+   "fieldtype": "HTML",
+   "label": "Preview"
+  },
+  {
+   "fieldname": "sb_files",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "print_file",
+   "fieldtype": "Attach",
+   "label": "Print-Ready PDF",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "proof_file",
+   "fieldtype": "Attach",
+   "label": "Proof Sheet PDF",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "preview_image",
+   "fieldtype": "Attach Image",
+   "label": "Preview Image",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "cb5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "processed_on",
+   "fieldtype": "Datetime",
+   "label": "Processed On",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "alignment_info",
+   "fieldtype": "Small Text",
+   "label": "Alignment",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "ink_info",
+   "fieldtype": "Small Text",
+   "label": "Colour / Ink",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "processing_error",
+   "fieldtype": "Small Text",
+   "label": "Processing Error",
+   "read_only": 1,
+   "no_copy": 1,
+   "depends_on": "eval:doc.processing_status=='Failed'"
+  },
+  {
+   "fieldname": "sb_warn",
+   "fieldtype": "Section Break",
+   "label": "Preflight"
+  },
+  {
+   "fieldname": "warnings",
+   "fieldtype": "Table",
+   "label": "Preflight Results",
+   "options": "Artwork Preflight Warning",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "report_json",
+   "fieldtype": "Code",
+   "label": "Raw Report",
+   "options": "JSON",
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "issingle": 0,
+ "links": [],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork User",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "quick_entry": 0,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "item_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "item,artwork_proof,component_type",
+ "image_field": "preview_image"
+}

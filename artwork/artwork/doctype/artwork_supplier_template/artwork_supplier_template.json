@@ -1,0 +1,226 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Supplier Template",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 0,
+ "field_order": [
+  "template_name",
+  "supplier",
+  "component_type",
+  "enabled",
+  "cb1",
+  "template_file",
+  "template_page",
+  "template_preview",
+  "sb_geo",
+  "trim_width_mm",
+  "trim_height_mm",
+  "bleed_mm",
+  "safe_margin_mm",
+  "cb2",
+  "spine_width_mm",
+  "spine_centre_mm",
+  "cb3",
+  "page_width_mm",
+  "page_height_mm",
+  "detected_spine_centre_mm",
+  "detected_spine_width_mm",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "label": "Template Name",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "component_type",
+   "fieldtype": "Select",
+   "label": "Component Type",
+   "options": "\nSleeve / Jacket\nWide-Spine Jacket\nGatefold Outer\nGatefold Inner\nPrinted Inner Sleeve\nCentre Label A\nCentre Label B\nSticker\nHype Sticker\nInsert\nPoster\nObi Strip\nBox / Slipcase\nDownload Card\nOther",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "default": "1"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template_file",
+   "fieldtype": "Attach",
+   "label": "Template PDF",
+   "reqd": 1
+  },
+  {
+   "fieldname": "template_page",
+   "fieldtype": "Int",
+   "label": "Template Page",
+   "default": "1"
+  },
+  {
+   "fieldname": "template_preview",
+   "fieldtype": "Attach Image",
+   "label": "Template Preview",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_geo",
+   "fieldtype": "Section Break",
+   "label": "Geometry",
+   "description": "Leave the spine centre blank to detect it from the fold lines in the template PDF. All values in millimetres."
+  },
+  {
+   "fieldname": "trim_width_mm",
+   "fieldtype": "Float",
+   "label": "Trim Width (mm)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "trim_height_mm",
+   "fieldtype": "Float",
+   "label": "Trim Height (mm)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "bleed_mm",
+   "fieldtype": "Float",
+   "label": "Bleed (mm)",
+   "default": "3"
+  },
+  {
+   "fieldname": "safe_margin_mm",
+   "fieldtype": "Float",
+   "label": "Safe Margin (mm)",
+   "default": "3"
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spine_width_mm",
+   "fieldtype": "Float",
+   "label": "Spine Width (mm)",
+   "description": "0 for products without a spine (labels, stickers)."
+  },
+  {
+   "fieldname": "spine_centre_mm",
+   "fieldtype": "Float",
+   "label": "Spine Centre Override (mm)",
+   "description": "Measured from the left edge of the template page."
+  },
+  {
+   "fieldname": "cb3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "page_width_mm",
+   "fieldtype": "Float",
+   "label": "Template Page Width (mm)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "page_height_mm",
+   "fieldtype": "Float",
+   "label": "Template Page Height (mm)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "detected_spine_centre_mm",
+   "fieldtype": "Float",
+   "label": "Detected Spine Centre (mm)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "detected_spine_width_mm",
+   "fieldtype": "Float",
+   "label": "Detected Spine Width (mm)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Supplier Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "issingle": 0,
+ "links": [],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork User",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "quick_entry": 0,
+ "autoname": "field:template_name",
+ "naming_rule": "By fieldname",
+ "search_fields": "supplier,component_type"
+}

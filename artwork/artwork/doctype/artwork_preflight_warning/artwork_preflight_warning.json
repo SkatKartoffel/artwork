@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Preflight Warning",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 1,
+ "field_order": [
+  "severity",
+  "code",
+  "message",
+  "acknowledged"
+ ],
+ "fields": [
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "Error\nWarning\nInfo",
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message",
+   "in_list_view": 1,
+   "columns": 7,
+   "read_only": 1
+  },
+  {
+   "fieldname": "acknowledged",
+   "fieldtype": "Check",
+   "label": "OK'd",
+   "in_list_view": 1,
+   "columns": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "issingle": 0,
+ "links": [],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0,
+ "quick_entry": 0
+}

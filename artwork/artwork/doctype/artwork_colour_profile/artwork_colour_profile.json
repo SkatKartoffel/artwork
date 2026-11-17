@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Colour Profile",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 0,
+ "field_order": [
+  "profile_name",
+  "max_ink",
+  "rendering_intent",
+  "cb1",
+  "icc_file",
+  "output_condition",
+  "enabled",
+  "sb2",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "label": "Profile Name",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "max_ink",
+   "fieldtype": "Int",
+   "label": "Maximum Ink / TAC (%)",
+   "reqd": 1,
+   "in_list_view": 1,
+   "default": "300"
+  },
+  {
+   "fieldname": "rendering_intent",
+   "fieldtype": "Select",
+   "label": "Rendering Intent",
+   "options": "Relative Colorimetric\nPerceptual\nSaturation\nAbsolute Colorimetric",
+   "default": "Relative Colorimetric"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "icc_file",
+   "fieldtype": "Attach",
+   "label": "ICC Profile File",
+   "reqd": 1,
+   "description": "Upload the .icc / .icm file, e.g. ISOcoated_v2_300_eci.icc"
+  },
+  {
+   "fieldname": "output_condition",
+   "fieldtype": "Data",
+   "label": "Output Condition Identifier",
+   "description": "Written into the PDF OutputIntent, e.g. FOGRA39L"
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "default": "1"
+  },
+  {
+   "fieldname": "sb2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "issingle": 0,
+ "links": [],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork User",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "quick_entry": 0,
+ "autoname": "field:profile_name",
+ "naming_rule": "By fieldname"
+}

@@ -1,0 +1,69 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Proof Log",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 1,
+ "field_order": [
+  "revision",
+  "action",
+  "logged_by",
+  "logged_on",
+  "comment"
+ ],
+ "fields": [
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "label": "Rev",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Data",
+   "label": "Action",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "logged_by",
+   "fieldtype": "Data",
+   "label": "By",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "logged_on",
+   "fieldtype": "Datetime",
+   "label": "On",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Comment",
+   "in_list_view": 1,
+   "columns": 3
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "issingle": 0,
+ "links": [],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0,
+ "quick_entry": 0
+}

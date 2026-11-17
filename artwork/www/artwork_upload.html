@@ -1,0 +1,77 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_content %}
+{% include "artwork/templates/includes/artwork_portal_style.html" %}
+<div class="aw">
+	<div class="aw-head">
+		<h1>{{ company }} · Artwork Upload</h1>
+		{% if proof %}<div class="sub">{{ proof.project_name }} · {{ proof.name }}</div>{% endif %}
+	</div>
+	{% if error %}
+		<div class="aw-msg err">{{ error }}</div>
+	{% elif proof.status in ("Sent to Customer", "Approved") %}
+		<div class="aw-msg ok">Your proof is {{ "approved" if proof.status == "Approved" else "ready to review" }} – no uploads needed right now.</div>
+	{% else %}
+		<p>Upload print-ready artwork for each part below. <b>PDF with fonts embedded and 3mm bleed</b> is best; AI, EPS, TIFF, JPG and PNG are accepted.
+		Build your artwork on the template supplied and keep images at 300dpi or more. Supply special finishes (spot UV, foil) as named spot colours or as a separate black-only file.</p>
+		{% for c in components %}
+		<div class="aw-card" data-component="{{ c.name }}">
+			<h3>{{ c.title }} {% if c.has_artwork %}<span class="aw-pill ok">artwork received</span>{% endif %}</h3>
+			<div class="aw-muted">SKU {{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
+			<div class="aw-row">
+				<a class="aw-btn ghost" href="{{ file_base }}&kind=template&component={{ c.name }}">Download template</a>
+			</div>
+			<div class="aw-row">
+				<input type="file" data-target="artwork" accept=".pdf,.ai,.eps,.tif,.tiff,.jpg,.jpeg,.png">
+				<button class="aw-btn primary" data-upload="artwork">Upload artwork</button>
+			</div>
+			{% for u in c.upgrades %}
+			<div class="aw-row">
+				<span style="min-width:150px"><b>{{ u.upgrade }}</b> mask {% if u.has_file %}<span class="aw-pill ok">received</span>{% endif %}</span>
+				<input type="file" data-target="upgrade" data-row="{{ u.row }}" accept=".pdf,.ai,.eps,.tif,.tiff,.png">
+				<button class="aw-btn ghost" data-upload="upgrade" data-row="{{ u.row }}">Upload</button>
+			</div>
+			{% endfor %}
+			<div class="aw-result"></div>
+		</div>
+		{% endfor %}
+	{% endif %}
+</div>
+{% if proof %}
+<script>
+(function () {
+	document.querySelectorAll("[data-upload]").forEach((btn) => btn.addEventListener("click", async () => {
+		const card = btn.closest("[data-component]");
+		const target = btn.dataset.upload;
+		const row = btn.dataset.row || "";
+		const input = card.querySelector(target === "artwork" ? 'input[data-target="artwork"]' : `input[data-row="${row}"]`);
+		const out = card.querySelector(".aw-result");
+		if (!input.files.length) { out.innerHTML = '<div class="aw-msg err">Choose a file first.</div>'; return; }
+		const fd = new FormData();
+		fd.append("proof", {{ proof.name | tojson if proof else '""' }});
+		fd.append("key", {{ key | tojson if key else '""' }});
+		fd.append("component", card.dataset.component);
+		fd.append("target", target);
+		fd.append("row", row);
+		fd.append("file", input.files[0]);
+		btn.disabled = true; btn.textContent = "Uploading…";
+		try {
+			const r = await fetch("/api/method/artwork.api.customer_upload", {
+				method: "POST", body: fd,
+				headers: { "Accept": "application/json", "X-Frappe-CSRF-Token": {{ csrf | tojson }} },
+			});
+			const j = await r.json().catch(() => ({}));
+			if (!r.ok) throw new Error(j._server_messages ? JSON.parse(JSON.parse(j._server_messages)[0]).message : "Upload failed (file too large?)");
+			out.innerHTML = '<div class="aw-msg ok"></div>';
+			out.firstChild.textContent = `Received ${j.message.file}. We'll check it and send you a proof.`;
+			btn.textContent = "Uploaded";
+		} catch (e) {
+			out.innerHTML = '<div class="aw-msg err"></div>';
+			out.firstChild.textContent = e.message;
+			btn.disabled = false; btn.textContent = "Try again";
+		}
+	}));
+})();
+</script>
+{% endif %}
+{% endblock %}

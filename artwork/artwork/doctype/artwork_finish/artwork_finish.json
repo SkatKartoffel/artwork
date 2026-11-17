@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Finish",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 0,
+ "field_order": [
+  "finish_name",
+  "colour_profile",
+  "max_ink",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "finish_name",
+   "fieldtype": "Data",
+   "label": "Finish",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "colour_profile",
+   "fieldtype": "Link",
+   "label": "Colour Profile",
+   "options": "Artwork Colour Profile",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "max_ink",
+   "fieldtype": "Int",
+   "label": "Max Ink (%)",
+   "fetch_from": "colour_profile.max_ink",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "issingle": 0,
+ "links": [],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork User",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "quick_entry": 0,
+ "autoname": "field:finish_name",
+ "naming_rule": "By fieldname"
+}

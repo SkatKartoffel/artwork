@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Component Upgrade",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 1,
+ "field_order": [
+  "upgrade",
+  "source",
+  "mask_file",
+  "page",
+  "spot_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "upgrade",
+   "fieldtype": "Link",
+   "label": "Upgrade",
+   "options": "Artwork Print Upgrade",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Supplied As",
+   "options": "Artwork spot\nSeparate file\nArtwork page",
+   "default": "Artwork spot",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "mask_file",
+   "fieldtype": "Attach",
+   "label": "Mask File",
+   "in_list_view": 1,
+   "columns": 3,
+   "depends_on": "eval:doc.source=='Separate file'"
+  },
+  {
+   "fieldname": "page",
+   "fieldtype": "Int",
+   "label": "Page",
+   "in_list_view": 1,
+   "columns": 1,
+   "depends_on": "eval:doc.source!='Artwork spot'"
+  },
+  {
+   "fieldname": "spot_name",
+   "fieldtype": "Data",
+   "label": "Spot Name",
+   "fetch_from": "upgrade.spot_name",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "issingle": 0,
+ "links": [],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0,
+ "quick_entry": 0
+}

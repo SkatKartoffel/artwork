@@ -1,0 +1,94 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_content %}
+{% include "artwork/templates/includes/artwork_portal_style.html" %}
+<div class="aw">
+	<div class="aw-head">
+		<h1>{{ company }} · Artwork Proof</h1>
+		{% if proof %}<div class="sub">{{ proof.project_name }} · {{ proof.name }} · revision {{ proof.revision or 1 }}</div>{% endif %}
+	</div>
+
+	{% if error %}
+		<div class="aw-msg err">{{ error }}</div>
+	{% else %}
+		{% if proof.status == "Approved" %}
+			<div class="aw-msg ok"><b>Approved</b> by {{ proof.responded_by }} on {{ frappe.format_date(proof.responded_on) }}. Thank you – your job is moving into production.</div>
+		{% elif proof.status == "Changes Requested" %}
+			<div class="aw-msg err">You asked for changes on {{ frappe.format_date(proof.responded_on) }}. We'll send a new proof once they're made.</div>
+		{% elif proof.status != "Sent to Customer" %}
+			<div class="aw-msg err">This proof is being updated and isn't ready for approval yet.</div>
+		{% endif %}
+
+		{% if proof.has_combined %}
+			<p><a class="aw-btn ghost" href="{{ file_base }}&kind=combined">Download full proof (PDF)</a></p>
+		{% endif %}
+
+		{% for c in components %}
+		<div class="aw-card">
+			<h3>{{ c.title }}</h3>
+			<div class="aw-muted">SKU {{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
+			{% if c.has_preview %}
+				<a href="{{ file_base }}&kind=proof&component={{ c.name }}" target="_blank">
+					<img class="aw-prev" src="{{ file_base }}&kind=preview&component={{ c.name }}" alt="{{ c.title }}"></a>
+			{% endif %}
+			{% if c.upgrades %}<div class="aw-muted">Special finishes: {% for u in c.upgrades %}{{ u.upgrade }}{% if not loop.last %}, {% endif %}{% endfor %} (shown as coloured overlays)</div>{% endif %}
+			{% for w in c.issues %}<div class="aw-issue {{ w.severity }}"><b>{{ w.severity }}:</b> {{ w.message }}</div>{% endfor %}
+		</div>
+		{% endfor %}
+
+		{% if proof.status == "Sent to Customer" %}
+		<div class="aw-card" id="aw-form">
+			<h3>Your decision</h3>
+			<p class="aw-muted">Please check text, spelling, barcodes, catalogue numbers and positioning. Screen colours are not accurate.
+			The magenta template lines are for position only and won't be printed.</p>
+			<label>Your name</label>
+			<input type="text" id="aw-name" autocomplete="name">
+			<label style="margin-top:12px">Comments <span class="aw-muted">(required if you need changes)</span></label>
+			<textarea id="aw-comments" rows="4"></textarea>
+			<label style="margin-top:12px;display:flex;gap:8px;align-items:flex-start">
+				<input type="checkbox" id="aw-confirm" style="margin-top:4px">
+				<span>I have checked every part of this proof and approve it for production. I understand changes after approval may cost extra and delay my order.</span>
+			</label>
+			<div class="aw-row">
+				<button class="aw-btn ok" data-action="approve">Approve for production</button>
+				<button class="aw-btn ghost" data-action="changes">Request changes</button>
+			</div>
+			<div id="aw-result"></div>
+		</div>
+		{% endif %}
+	{% endif %}
+</div>
+{% if proof and proof.status == "Sent to Customer" %}
+<script>
+(function () {
+	const form = document.getElementById("aw-form");
+	if (!form) return;
+	form.querySelectorAll("button[data-action]").forEach((btn) => btn.addEventListener("click", async () => {
+		const action = btn.dataset.action;
+		const body = new URLSearchParams({
+			proof: {{ proof.name | tojson }}, key: {{ key | tojson }}, action,
+			name: document.getElementById("aw-name").value,
+			comments: document.getElementById("aw-comments").value,
+			confirm: document.getElementById("aw-confirm").checked ? 1 : 0,
+		});
+		form.querySelectorAll("button").forEach((b) => (b.disabled = true));
+		const out = document.getElementById("aw-result");
+		try {
+			const r = await fetch("/api/method/artwork.api.customer_respond", {
+				method: "POST", body,
+				headers: { "Accept": "application/json", "X-Frappe-CSRF-Token": {{ csrf | tojson }} },
+			});
+			const j = await r.json();
+			if (!r.ok) throw new Error(j._server_messages ? JSON.parse(JSON.parse(j._server_messages)[0]).message : (j.exception || "Something went wrong"));
+			out.innerHTML = `<div class="aw-msg ok">${j.message.status === "Approved" ? "Thank you – approved." : "Thanks – we've got your comments and will send a new proof."}</div>`;
+			setTimeout(() => location.reload(), 1800);
+		} catch (e) {
+			out.innerHTML = `<div class="aw-msg err"></div>`;
+			out.firstChild.textContent = e.message;
+			form.querySelectorAll("button").forEach((b) => (b.disabled = false));
+		}
+	}));
+})();
+</script>
+{% endif %}
+{% endblock %}

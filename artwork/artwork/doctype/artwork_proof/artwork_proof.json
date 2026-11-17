@@ -1,0 +1,290 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Proof",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 0,
+ "field_order": [
+  "naming_series",
+  "title",
+  "project",
+  "project_name",
+  "cb1",
+  "status",
+  "revision",
+  "customer",
+  "sales_order",
+  "cb2",
+  "contact_email",
+  "cc_emails",
+  "sb_comp",
+  "components_html",
+  "sb_approval",
+  "sent_on",
+  "link_expires",
+  "access_key",
+  "cb3",
+  "responded_on",
+  "responded_by",
+  "approved_revision",
+  "sb_resp",
+  "customer_comments",
+  "proof_pdf",
+  "sb_log",
+  "log",
+  "sb_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "ART-.YYYY.-.#####",
+   "default": "ART-.YYYY.-.#####",
+   "reqd": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Job Ticket",
+   "options": "Project",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "label": "Job Ticket Name",
+   "fetch_from": "project.project_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nAwaiting Artwork\nProcessing\nNeeds Attention\nReady for Review\nSent to Customer\nChanges Requested\nApproved\nCancelled",
+   "default": "Draft",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Int",
+   "label": "Revision",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "fetch_from": "project.customer",
+   "fetch_if_empty": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order",
+   "fetch_from": "project.sales_order",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_email",
+   "fieldtype": "Data",
+   "label": "Customer Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "cc_emails",
+   "fieldtype": "Small Text",
+   "label": "CC"
+  },
+  {
+   "fieldname": "sb_comp",
+   "fieldtype": "Section Break",
+   "label": "Components"
+  },
+  {
+   "fieldname": "components_html",
+   "fieldtype": "HTML",
+   "label": "Components"
+  },
+  {
+   "fieldname": "sb_approval",
+   "fieldtype": "Section Break",
+   "label": "Customer Approval",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "sent_on",
+   "fieldtype": "Datetime",
+   "label": "Last Sent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "link_expires",
+   "fieldtype": "Datetime",
+   "label": "Customer Link Expires",
+   "read_only": 1
+  },
+  {
+   "fieldname": "access_key",
+   "fieldtype": "Data",
+   "label": "Access Key",
+   "read_only": 1,
+   "hidden": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "cb3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "responded_on",
+   "fieldtype": "Datetime",
+   "label": "Customer Responded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "responded_by",
+   "fieldtype": "Data",
+   "label": "Responded By (name)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_revision",
+   "fieldtype": "Int",
+   "label": "Approved Revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_resp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "customer_comments",
+   "fieldtype": "Small Text",
+   "label": "Customer Comments",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proof_pdf",
+   "fieldtype": "Attach",
+   "label": "Combined Proof PDF",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_log",
+   "fieldtype": "Section Break",
+   "label": "History",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "log",
+   "fieldtype": "Table",
+   "label": "History",
+   "options": "Artwork Proof Log",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sb_notes",
+   "fieldtype": "Section Break",
+   "label": "Internal Notes",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "issingle": 0,
+ "links": [
+  {
+   "link_doctype": "Artwork Component",
+   "link_fieldname": "artwork_proof",
+   "group": "Components"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork Manager",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "Artwork User",
+   "read": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "quick_entry": 0,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "title",
+ "show_title_field_in_link": 1,
+ "search_fields": "project,customer,status"
+}

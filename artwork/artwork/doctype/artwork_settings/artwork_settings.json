@@ -1,0 +1,241 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Settings",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 0,
+ "field_order": [
+  "sb_proc",
+  "ghostscript_path",
+  "auto_process",
+  "outline_fonts_default",
+  "keep_work_files",
+  "cb_proc1",
+  "preview_dpi",
+  "default_bleed_mm",
+  "safe_margin_mm",
+  "sb_pre",
+  "min_dpi",
+  "min_font_pt",
+  "min_line_pt",
+  "cb_pre",
+  "block_send_on_errors",
+  "sb_tpl",
+  "template_spot_name",
+  "template_display_colour",
+  "template_alt_cmyk",
+  "cb_tpl",
+  "template_aliases",
+  "sb_portal",
+  "company_name",
+  "brand_colour",
+  "proof_logo",
+  "cb_portal",
+  "link_expiry_days",
+  "proof_email_intro",
+  "upload_email_intro"
+ ],
+ "fields": [
+  {
+   "fieldname": "sb_proc",
+   "fieldtype": "Section Break",
+   "label": "Processing"
+  },
+  {
+   "fieldname": "ghostscript_path",
+   "fieldtype": "Data",
+   "label": "Ghostscript Path",
+   "description": "Leave blank to use <code>gs</code> from the server PATH."
+  },
+  {
+   "fieldname": "auto_process",
+   "fieldtype": "Check",
+   "label": "Auto-process When Artwork Changes",
+   "default": "1"
+  },
+  {
+   "fieldname": "outline_fonts_default",
+   "fieldtype": "Check",
+   "label": "Convert Fonts to Outlines by Default",
+   "default": "1"
+  },
+  {
+   "fieldname": "keep_work_files",
+   "fieldtype": "Check",
+   "label": "Keep Intermediate Work Files",
+   "default": "0",
+   "description": "For debugging only."
+  },
+  {
+   "fieldname": "cb_proc1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "preview_dpi",
+   "fieldtype": "Int",
+   "label": "Preview Resolution (dpi)",
+   "default": "110"
+  },
+  {
+   "fieldname": "default_bleed_mm",
+   "fieldtype": "Float",
+   "label": "Default Bleed (mm)",
+   "default": "3"
+  },
+  {
+   "fieldname": "safe_margin_mm",
+   "fieldtype": "Float",
+   "label": "Default Safe Margin (mm)",
+   "default": "3"
+  },
+  {
+   "fieldname": "sb_pre",
+   "fieldtype": "Section Break",
+   "label": "Preflight Limits"
+  },
+  {
+   "fieldname": "min_dpi",
+   "fieldtype": "Int",
+   "label": "Minimum Image Resolution (dpi)",
+   "default": "300"
+  },
+  {
+   "fieldname": "min_font_pt",
+   "fieldtype": "Float",
+   "label": "Minimum Font Size (pt)",
+   "default": "5"
+  },
+  {
+   "fieldname": "min_line_pt",
+   "fieldtype": "Float",
+   "label": "Minimum Line Weight (pt)",
+   "default": "0.25"
+  },
+  {
+   "fieldname": "cb_pre",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "block_send_on_errors",
+   "fieldtype": "Check",
+   "label": "Require Errors to be Acknowledged Before Sending",
+   "default": "1"
+  },
+  {
+   "fieldname": "sb_tpl",
+   "fieldtype": "Section Break",
+   "label": "Template Layer"
+  },
+  {
+   "fieldname": "template_spot_name",
+   "fieldtype": "Data",
+   "label": "Template Spot Name",
+   "default": "Template",
+   "description": "Name of the non-printing spot colour the supplier template is converted to."
+  },
+  {
+   "fieldname": "template_display_colour",
+   "fieldtype": "Color",
+   "label": "Template Display Colour",
+   "default": "#E6007E"
+  },
+  {
+   "fieldname": "template_alt_cmyk",
+   "fieldtype": "Data",
+   "label": "Template Alternate CMYK (%)",
+   "default": "0,100,0,0"
+  },
+  {
+   "fieldname": "cb_tpl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template_aliases",
+   "fieldtype": "Small Text",
+   "label": "Customer Dieline Spot Names",
+   "default": "Template, Dieline, Die Line, Die, Cut, CutContour, Cut Contour, Crease, Fold, Knife, Stanze, Stanzkontur, Thru-cut, Kiss Cut",
+   "description": "Spot colours in customer artwork with these names are treated as their dieline: removed from the print art and used to find their spine."
+  },
+  {
+   "fieldname": "sb_portal",
+   "fieldtype": "Section Break",
+   "label": "Customer Portal & Proof Sheet"
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "label": "Company Name on Proofs",
+   "default": "Packaged Sounds"
+  },
+  {
+   "fieldname": "brand_colour",
+   "fieldtype": "Color",
+   "label": "Proof Header Colour",
+   "default": "#111111"
+  },
+  {
+   "fieldname": "proof_logo",
+   "fieldtype": "Attach Image",
+   "label": "Proof Logo (white on dark)"
+  },
+  {
+   "fieldname": "cb_portal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "link_expiry_days",
+   "fieldtype": "Int",
+   "label": "Customer Link Valid For (days)",
+   "default": "30"
+  },
+  {
+   "fieldname": "proof_email_intro",
+   "fieldtype": "Text Editor",
+   "label": "Proof Email Intro",
+   "default": "<p>Hi,</p><p>Your artwork proofs are ready. Please check every page carefully and approve or request changes using the link below.</p>"
+  },
+  {
+   "fieldname": "upload_email_intro",
+   "fieldtype": "Text Editor",
+   "label": "Artwork Request Email Intro",
+   "default": "<p>Hi,</p><p>Please upload print-ready artwork for your order using the link below. Templates for each part can be downloaded from the same page.</p>"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "issingle": 1,
+ "links": [],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "Artwork Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "quick_entry": 0
+}

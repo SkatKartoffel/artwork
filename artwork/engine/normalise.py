@@ -1,0 +1,167 @@
+"""Turn whatever the customer sent into clean single-page PDFs.
+
+Every normalised page has MediaBox [0 0 W H], no /Rotate, and its original
+content wrapped in one Form XObject.  Trim/Bleed boxes are carried across in
+the new coordinate system, so the rest of the engine never has to think about
+rotation, CropBoxes or odd origins.
+"""
+from __future__ import annotations
+
+import os
+
+import pikepdf
+from pikepdf import Array, Dictionary, Name
+
+from .util import EngineError, pt, run_gs
+
+RASTER_EXT = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".psd"}
+
+
+def to_pdf(src: str, work: str, fit_size_pt: tuple[float, float] | None = None, gs=None) -> str:
+    """Return a PDF path for any supported input file."""
+    ext = os.path.splitext(src)[1].lower()
+    if ext == ".pdf":
+        return src
+    if ext == ".ai":
+        try:
+            pikepdf.open(src).close()  # PDF-compatible Illustrator file
+            return src
+        except Exception:
+            pass
+    if ext in (".eps", ".ps", ".ai"):
+        dst = os.path.join(work, "converted_eps.pdf")
+        run_gs(["-sDEVICE=pdfwrite", "-dEPSCrop", "-dAutoRotatePages=/None",
+                f"--permit-file-read={os.path.dirname(os.path.abspath(src))}/", "-o", dst, src], gs)
+        return dst
+    if ext in RASTER_EXT:
+        return _raster_to_pdf(src, work, fit_size_pt)
+    raise EngineError(f"Unsupported artwork file type '{ext}'. Supply PDF, AI, EPS, TIFF, JPG or PNG.")
+
+
+def _raster_to_pdf(src, work, fit_size_pt):
+    import pymupdf
+
+    pix = pymupdf.Pixmap(src)
+    w_px, h_px = pix.width, pix.height
+    dpi = pix.xres if pix.xres and pix.xres >= 150 else None
+    if dpi:
+        w_pt, h_pt = w_px / dpi * 72, h_px / dpi * 72
+    elif fit_size_pt:
+        scale = max(fit_size_pt[0] / w_px, fit_size_pt[1] / h_px)
+        w_pt, h_pt = w_px * scale, h_px * scale
+    else:
+        w_pt, h_pt = w_px / 300 * 72, h_px / 300 * 72
+    doc = pymupdf.open()
+    page = doc.new_page(width=w_pt, height=h_pt)
+    page.insert_image(page.rect, filename=src)
+    dst = os.path.join(work, "converted_raster.pdf")
+    doc.save(dst)
+    return dst
+
+
+def page_count(path: str) -> int:
+    with pikepdf.open(path) as pdf:
+        return len(pdf.pages)
+
+
+def _inherited(obj, key):
+    node = obj
+    while node is not None:
+        if key in node:
+            return node[key]
+        node = node.get("/Parent")
+    return None
+
+
+def _box(v):
+    a = [float(x) for x in v]
+    return [min(a[0], a[2]), min(a[1], a[3]), max(a[0], a[2]), max(a[1], a[3])]
+
+
+def normalise_page(src: str, page_index: int, dst: str) -> dict:
+    """Write page `page_index` of `src` to `dst` as an upright page at origin.
+
+    Returns geometry {width, height, trim:[x0,y0,x1,y1], bleed:[...], has_trim}.
+    """
+    spdf = pikepdf.open(src)  # keep open until save: foreign stream data is copied lazily
+    if True:
+        if page_index >= len(spdf.pages):
+            raise EngineError(f"Page {page_index + 1} requested but the file only has {len(spdf.pages)} page(s).")
+        sp = spdf.pages[page_index]
+        media = _box(_inherited(sp.obj, "/MediaBox") or [0, 0, 612, 792])
+        crop = _inherited(sp.obj, "/CropBox")
+        view = _box(crop) if crop is not None else media
+        view = [max(view[0], media[0]), max(view[1], media[1]), min(view[2], media[2]), min(view[3], media[3])]
+        rot = int(_inherited(sp.obj, "/Rotate") or 0) % 360
+        trim = sp.obj.get("/TrimBox")
+        bleed = sp.obj.get("/BleedBox")
+
+        out = pikepdf.new()
+        out.pages.append(sp)
+        p = out.pages[0]
+        res = p.obj.get("/Resources")
+        if res is None:
+            res = _inherited(p.obj, "/Resources") or Dictionary()
+        p.contents_coalesce()
+        data = p.obj.Contents.read_bytes() if "/Contents" in p.obj else b""
+
+    x0, y0, x1, y1 = view
+    w, h = x1 - x0, y1 - y0
+    # matrix mapping original user space → upright page at origin
+    if rot == 90:
+        m = [0, -1, 1, 0, -y0, w + x0]
+        W, H = h, w
+    elif rot == 180:
+        m = [-1, 0, 0, -1, w + x0, h + y0]
+        W, H = w, h
+    elif rot == 270:
+        m = [0, 1, -1, 0, h + y0, -x0]
+        W, H = h, w
+    else:
+        m = [1, 0, 0, 1, -x0, -y0]
+        W, H = w, h
+
+    def tx(box):
+        b = _box(box)
+        pts = [(b[0], b[1]), (b[2], b[3]), (b[0], b[3]), (b[2], b[1])]
+        xs, ys = [], []
+        for (px, py) in pts:
+            xs.append(m[0] * px + m[2] * py + m[4])
+            ys.append(m[1] * px + m[3] * py + m[5])
+        r = [max(0, min(xs)), max(0, min(ys)), min(W, max(xs)), min(H, max(ys))]
+        return r
+
+    form = out.make_stream(data)
+    form.Type = Name.XObject
+    form.Subtype = Name.Form
+    form.BBox = Array(media)
+    form.Resources = res
+    if "/Group" in p.obj:
+        form.Group = p.obj.Group
+        del p.obj["/Group"]
+
+    p.obj.Contents = out.make_stream(
+        ("q %s cm /Fm0 Do Q" % " ".join(f"{v:.4f}" for v in m)).encode()
+    )
+    p.obj.Resources = Dictionary(XObject=Dictionary(Fm0=form))
+    for k in ("/Rotate", "/CropBox", "/ArtBox", "/Annots", "/TrimBox", "/BleedBox"):
+        if k in p.obj:
+            del p.obj[k]
+    p.obj.MediaBox = Array([0, 0, W, H])
+    geo = {"width": W, "height": H, "has_trim": trim is not None}
+    geo["trim"] = tx(trim) if trim is not None else [0, 0, W, H]
+    geo["bleed"] = tx(bleed) if bleed is not None else [0, 0, W, H]
+    p.obj.TrimBox = Array(geo["trim"])
+    p.obj.BleedBox = Array(geo["bleed"])
+    out.save(dst)
+    spdf.close()
+    return geo
+
+
+def blank_like(dst: str, width: float, height: float):
+    pdf = pikepdf.new()
+    pdf.add_blank_page(page_size=(width, height))
+    pdf.save(dst)
+
+
+__all__ = ["to_pdf", "normalise_page", "page_count", "pt"]
