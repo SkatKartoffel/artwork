@@ -11,19 +11,23 @@ CUSTOM_FIELDS = {
 			no_copy=1, translatable=0),
 	],
 	"Item": [
-		dict(fieldname="artwork_section", label="Artwork", fieldtype="Section Break", insert_after="description",
-			collapsible=1),
-		dict(fieldname="default_artwork_template", label="Default Supplier Template", fieldtype="Link",
+		dict(fieldname="artwork_section", label="Artwork / Print Spec", fieldtype="Section Break", insert_after="description",
+			collapsible=1, description="Print parts (Item Group: Print) – used when this item appears on an Artwork Proof."),
+		dict(fieldname="artwork_template", label="Supplier Template", fieldtype="Link",
 			options="Artwork Supplier Template", insert_after="artwork_section"),
-		dict(fieldname="default_artwork_finish", label="Default Finish", fieldtype="Link", options="Artwork Finish",
-			insert_after="default_artwork_template"),
-		dict(fieldname="artwork_cb", fieldtype="Column Break", insert_after="default_artwork_finish"),
+		dict(fieldname="artwork_finish", label="Finish", fieldtype="Link", options="Artwork Finish",
+			insert_after="artwork_template", description="Gloss / Matt → ISO Coated v2 300%; Reverse Board / Uncoated → Euroscale Uncoated v2"),
+		dict(fieldname="artwork_outline_fonts", label="Convert Fonts to Outlines", fieldtype="Check", default="1",
+			insert_after="artwork_finish"),
+		dict(fieldname="artwork_cb", fieldtype="Column Break", insert_after="artwork_outline_fonts"),
 		dict(fieldname="approved_artwork", label="Approved Print-Ready Artwork", fieldtype="Attach",
 			insert_after="artwork_cb", read_only=1, no_copy=1),
 		dict(fieldname="approved_artwork_proof", label="Approved On Proof", fieldtype="Link", options="Artwork Proof",
 			insert_after="approved_artwork", read_only=1, no_copy=1),
 		dict(fieldname="artwork_approved_on", label="Artwork Approved On", fieldtype="Date",
 			insert_after="approved_artwork_proof", read_only=1, no_copy=1),
+		dict(fieldname="artwork_upgrades", label="Print Upgrades (Spot UV, foil…)", fieldtype="Table",
+			options="Artwork Item Upgrade", insert_after="artwork_approved_on"),
 	],
 }
 
@@ -51,6 +55,7 @@ UPGRADES = [
 
 def after_install():
 	ensure_roles()
+	ensure_print_group()
 	create_custom_fields(CUSTOM_FIELDS, update=True)
 	seed_masters()
 	seed_settings()
@@ -59,6 +64,8 @@ def after_install():
 
 def after_migrate():
 	ensure_roles()
+	ensure_print_group()
+	seed_settings()  # fills only settings that have never been set (e.g. ones added in an update)
 	create_custom_fields(CUSTOM_FIELDS, update=True)
 
 
@@ -92,3 +99,14 @@ def seed_settings():
 			s.set(df.fieldname, df.default)
 	s.flags.ignore_mandatory = True
 	s.save(ignore_permissions=True)
+
+
+def ensure_print_group():
+	if frappe.db.exists("Item Group", "Print"):
+		return
+	parent = frappe.db.get_value("Item Group", {"is_group": 1, "parent_item_group": ["in", ["", None]]}, "name") \
+		or ("All Item Groups" if frappe.db.exists("Item Group", "All Item Groups") else None)
+	if not parent:
+		return
+	frappe.get_doc({"doctype": "Item Group", "item_group_name": "Print", "parent_item_group": parent,
+		"is_group": 1}).insert(ignore_permissions=True)

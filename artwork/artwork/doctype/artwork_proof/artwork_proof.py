@@ -6,6 +6,15 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_days, cint, escape_html, get_url, now_datetime, nowdate
 
+from artwork.processing import (
+	OUTPUT_FIELDS,
+	enqueue_proof,
+	is_print_item,
+	print_groups,
+	row_signature,
+	settings,
+)
+
 LOCKED_STATUSES = ("Approved", "Cancelled")
 PROJECT_LABEL = {
 	"Draft": "Awaiting Artwork",
@@ -25,8 +34,20 @@ class ArtworkProof(Document):
 			self.title = " – ".join(filter(None, [self.project_name or self.project, self.customer]))
 		if not self.contact_email and self.customer:
 			self.contact_email = frappe.db.get_value("Customer", self.customer, "email_id")
+		if self.is_new() and not self.items:
+			self._pull_print_items()
+		self.validate_items()
+		self.sync_masks()
+		if not self.flags.from_processing:
+			if not self.is_new() and not self.flags.server_action:
+				self.protect_outputs()
+			self.validate_locked()
+			self.queue_changed_rows()
+		self.status = computed_status(self)
 
 	def on_update(self):
+		if self.flags.queue_rows:
+			enqueue_proof(self.name)
 		sync_project_status(self.project)
 
 	def on_trash(self):
@@ -36,17 +57,106 @@ class ArtworkProof(Document):
 	def after_delete(self):
 		sync_project_status(self.project)
 
-	# ------------------------------------------------------------------ helpers
-	def components(self, fields=None):
-		return frappe.get_all(
-			"Artwork Component",
-			filters={"artwork_proof": self.name},
-			fields=fields or ["name", "item", "item_name", "component_type", "processing_status",
-				"error_count", "warning_count", "artwork_file", "print_file", "preview_image",
-				"proof_file", "supplier_template", "finish", "approved"],
-			order_by="creation asc",
-		)
+	# ------------------------------------------------------------------ rows
+	def validate_items(self):
+		seen = set()
+		groups = print_groups()
+		for row in self.items:
+			if row.item in seen:
+				frappe.throw(_("Row {0}: {1} is listed twice.").format(row.idx, row.item))
+			seen.add(row.item)
+			if groups and not is_print_item(row.item):
+				frappe.throw(_("Row {0}: {1} is not in the {2} item group.").format(
+					row.idx, row.item, settings().print_item_group or "Print"))
+			spec = frappe.db.get_value("Item", row.item, ["artwork_template", "artwork_finish"], as_dict=True) or {}
+			row.supplier_template = spec.get("artwork_template")
+			row.finish = spec.get("artwork_finish")
 
+	def sync_masks(self):
+		"""One mask row per print item whose upgrade is supplied as a separate file."""
+		wanted = set()
+		for row in self.items:
+			for u in frappe.get_all("Artwork Item Upgrade", filters={"parent": row.item, "parenttype": "Item",
+					"source": "Separate file"}, pluck="upgrade"):
+				wanted.add((row.item, u))
+		have = {(m.item, m.upgrade) for m in self.masks}
+		self.set("masks", [m for m in self.masks if (m.item, m.upgrade) in wanted])
+		for item, up in sorted(wanted - have):
+			self.append("masks", {"item": item, "upgrade": up})
+
+	def protect_outputs(self):
+		"""Processing results come from the server only; a stale browser form can't overwrite them."""
+		db_rows = {r.name: r for r in frappe.get_all("Artwork Proof Item", filters={"parent": self.name,
+			"parenttype": self.doctype}, fields=["name", *OUTPUT_FIELDS])}
+		for row in self.items:
+			if row.name in db_rows:
+				for f in OUTPUT_FIELDS:
+					row.set(f, db_rows[row.name].get(f))
+		acks = {w.name: w.acknowledged for w in self.warnings if w.name}
+		live_rows = {r.name for r in self.items}
+		db_warn = frappe.get_all("Artwork Preflight Warning", filters={"parent": self.name, "parenttype": self.doctype},
+			fields=["name", "item", "severity", "code", "message", "acknowledged", "row_ref"], order_by="idx asc")
+		self.set("warnings", [])
+		for w in db_warn:
+			if w.row_ref and w.row_ref not in live_rows:
+				continue
+			self.append("warnings", {
+				"item": w.item, "severity": w.severity, "code": w.code, "message": w.message, "row_ref": w.row_ref,
+				"acknowledged": acks.get(w.name, w.acknowledged),
+			})
+
+	def validate_locked(self):
+		if self.is_new() or self.status not in LOCKED_STATUSES:
+			return
+		before = self.get_doc_before_save()
+		if before is None:
+			return
+		old = {r.item: row_signature(before, r) for r in before.items}
+		new = {r.item: row_signature(self, r) for r in self.items}
+		if old != new:
+			frappe.throw(_("This proof is {0}. Use New Revision before changing items or artwork.").format(self.status))
+
+	def queue_changed_rows(self):
+		auto = cint(settings().auto_process)
+		for row in self.items:
+			sig = row_signature(self, row)
+			if not row.artwork_file:
+				if row.processing_status not in ("Needs Setup",):
+					row.processing_status = "Not Processed"
+				continue
+			if sig != (row.input_signature or "") and row.processing_status not in ("Queued", "Processing"):
+				row.approved = 0
+				if auto:
+					self._queue(row, sig)
+				else:
+					row.processing_status = "Not Processed"
+
+	def _queue(self, row, sig=None):
+		row.input_signature = sig or row_signature(self, row)
+		row.processing_status = "Queued"
+		row.processing_error = None
+		self.flags.queue_rows = True
+
+	# ------------------------------------------------------------------ print items from the Sales Order
+	def _pull_print_items(self):
+		existing = {r.item for r in self.items}
+		added = []
+		for code in find_print_items(self):
+			if code not in existing:
+				self.append("items", {"item": code})
+				existing.add(code)
+				added.append(code)
+		return added
+
+	@frappe.whitelist()
+	def get_print_items(self):
+		self._fresh()
+		self._check_unlocked()
+		added = self._pull_print_items()
+		self.save()
+		return added
+
+	# ------------------------------------------------------------------ helpers
 	def add_log(self, action, comment=None, by=None):
 		self.append("log", {
 			"revision": cint(self.revision),
@@ -65,34 +175,37 @@ class ArtworkProof(Document):
 	def portal_url(self, page="artwork_approval"):
 		return get_url(f"/{page}?proof={self.name}&key={self.access_key}")
 
+	def open_errors(self):
+		return [w for w in self.warnings if w.severity == "Error" and not w.acknowledged]
+
 	# ------------------------------------------------------------------ actions
 	@frappe.whitelist()
-	def process_all(self):
-		from artwork.processing import enqueue_component
-
+	def process(self, row=None):
+		"""(Re)process one row, or every row that has artwork."""
+		self._fresh()
 		self._check_unlocked()
 		n = 0
-		for c in self.components(["name", "artwork_file", "processing_status"]):
-			if c.artwork_file and c.processing_status not in ("Queued", "Processing"):
-				enqueue_component(c.name)
-				n += 1
-		refresh_proof_status(self.name)
+		for r in self.items:
+			if (row and r.name != row) or not r.artwork_file or r.processing_status in ("Queued", "Processing"):
+				continue
+			self._queue(r)
+			n += 1
+		if not n:
+			frappe.throw(_("Nothing to process – attach customer artwork first."))
+		self.save()
 		return n
 
 	@frappe.whitelist()
 	def request_artwork(self, recipients=None, message=None):
+		self._fresh()
 		self._check_unlocked()
 		recipients = recipients or self.contact_email
 		if not recipients:
 			frappe.throw(_("Set the customer email first."))
 		self.ensure_access_key()
-		s = frappe.get_cached_doc("Artwork Settings")
 		url = self.portal_url("artwork_upload")
-		rows = "".join(
-			f"<li>{escape_html(c.component_type or '')} – {escape_html(c.item)} {escape_html(c.item_name or '')}</li>"
-			for c in self.components()
-		)
-		body = (message or s.upload_email_intro or "") + (
+		rows = "".join(f"<li>{escape_html(r.item)} – {escape_html(r.item_name or '')}</li>" for r in self.items)
+		body = (message or settings().upload_email_intro or "") + (
 			f"<p><b>Job:</b> {escape_html(self.project_name or self.project)}</p><ul>{rows}</ul>"
 			f'<p><a href="{url}" style="background:#111;color:#fff;padding:10px 18px;text-decoration:none;'
 			f'border-radius:4px;display:inline-block">Upload artwork</a></p>'
@@ -106,37 +219,32 @@ class ArtworkProof(Document):
 
 	@frappe.whitelist()
 	def send_to_customer(self, recipients=None, message=None):
+		self._fresh()
 		from artwork.processing import build_combined_proof, file_path
 
 		self._check_unlocked()
-		comps = self.components()
-		if not comps:
-			frappe.throw(_("Add at least one artwork component."))
-		not_ready = [c.name for c in comps if c.processing_status != "Processed"]
+		if not self.items:
+			frappe.throw(_("Add at least one print item."))
+		not_ready = [r.item for r in self.items if r.processing_status != "Processed"]
 		if not_ready:
-			frappe.throw(_("These components are not processed yet: {0}").format(", ".join(not_ready)))
-		if cint(frappe.db.get_single_value("Artwork Settings", "block_send_on_errors")):
-			open_errors = frappe.get_all("Artwork Preflight Warning", filters={
-				"parenttype": "Artwork Component", "parent": ["in", [c.name for c in comps]],
-				"severity": "Error", "acknowledged": 0}, fields=["parent", "message"])
-			if open_errors:
-				lines = "".join(f"<li><b>{e.parent}</b>: {escape_html(e.message)}</li>" for e in open_errors[:10])
-				frappe.throw(_("Preflight errors must be fixed or ticked as OK before sending:") + f"<ul>{lines}</ul>",
-					title=_("Unresolved preflight errors"))
+			frappe.throw(_("These items are not processed yet: {0}").format(", ".join(not_ready)))
+		if cint(settings().block_send_on_errors) and self.open_errors():
+			lines = "".join(f"<li><b>{escape_html(w.item)}</b>: {escape_html(w.message)}</li>" for w in self.open_errors()[:10])
+			frappe.throw(_("Preflight errors must be fixed or ticked as OK'd before sending:") + f"<ul>{lines}</ul>",
+				title=_("Unresolved preflight errors"))
 		recipients = recipients or self.contact_email
 		if not recipients:
 			frappe.throw(_("Set the customer email first."))
 
 		self.revision = cint(self.revision) + 1
 		self.ensure_access_key()
-		self.db_update()
-		for c in comps:
-			frappe.db.set_value("Artwork Component", c.name, "approved", 0, update_modified=False)
+		for r in self.items:
+			r.approved = 0
+		self.save()
 		proof_url = build_combined_proof(self.name)
 		self.reload()
-		s = frappe.get_cached_doc("Artwork Settings")
 		url = self.portal_url()
-		body = (message or s.proof_email_intro or "") + (
+		body = (message or settings().proof_email_intro or "") + (
 			f"<p><b>Job:</b> {escape_html(self.project_name or self.project)} &nbsp; <b>Proof:</b> {self.name} "
 			f"rev {self.revision}</p>"
 			f'<p><a href="{url}" style="background:#111;color:#fff;padding:10px 18px;text-decoration:none;'
@@ -154,32 +262,35 @@ class ArtworkProof(Document):
 		self.status = "Sent to Customer"
 		self.sent_on = now_datetime()
 		self.add_log("Sent to customer", recipients)
+		self.flags.status_set = True
 		self.save()
 		return url
 
 	@frappe.whitelist()
 	def new_revision(self):
+		self._fresh()
 		if self.status not in ("Approved", "Sent to Customer", "Changes Requested"):
 			frappe.throw(_("Only sent or approved proofs need a new revision."))
 		was = self.status
 		self.status = "Draft"
+		for r in self.items:
+			r.approved = 0
 		self.add_log("Reopened", _("Reopened from {0}").format(was))
 		self.save()
-		for c in self.components(["name"]):
-			frappe.db.set_value("Artwork Component", c.name, "approved", 0)
-		refresh_proof_status(self.name)
 
 	@frappe.whitelist()
 	def copy_customer_link(self, page="artwork_approval"):
+		self._fresh()
 		if page not in ("artwork_approval", "artwork_upload"):
 			frappe.throw(_("Unknown page"))
-		if not self.access_key or not self.link_expires or self.link_expires < now_datetime():
+		if not self.access_key or not self.link_expires or str(self.link_expires) < str(now_datetime()):
 			self.ensure_access_key()
 			self.save()
 		return self.portal_url(page)
 
 	@frappe.whitelist()
 	def cancel_proof(self):
+		self._fresh()
 		self.status = "Cancelled"
 		self.add_log("Cancelled")
 		self.save()
@@ -191,15 +302,16 @@ class ArtworkProof(Document):
 		self.responded_by = by_name
 		self.customer_comments = comment
 		self.approved_revision = self.revision
+		for r in self.items:
+			r.approved = 1
 		self.add_log("Approved by customer", comment, by=by_name)
 		self.flags.ignore_permissions = True
+		self.flags.server_action = True
 		self.save()
-		item_meta = frappe.get_meta("Item")
-		for c in self.components(["name", "item", "print_file"]):
-			frappe.db.set_value("Artwork Component", c.name, "approved", 1)
-			if item_meta.has_field("approved_artwork"):
-				frappe.db.set_value("Item", c.item, {
-					"approved_artwork": c.print_file,
+		if frappe.get_meta("Item").has_field("approved_artwork"):
+			for r in self.items:
+				frappe.db.set_value("Item", r.item, {
+					"approved_artwork": r.print_file,
 					"approved_artwork_proof": self.name,
 					"artwork_approved_on": nowdate(),
 				}, update_modified=False)
@@ -215,6 +327,8 @@ class ArtworkProof(Document):
 		self.customer_comments = comment
 		self.add_log("Changes requested", comment, by=by_name)
 		self.flags.ignore_permissions = True
+		self.flags.server_action = True
+		self.flags.status_set = True
 		self.save()
 		self._timeline(_("Changes requested on artwork proof {0} rev {1}: {2}").format(self.name, self.revision, comment))
 		self._notify_staff(_("Artwork changes requested: {0}").format(self.title or self.name), comment)
@@ -232,30 +346,74 @@ class ArtworkProof(Document):
 				"document_type": self.doctype, "document_name": self.name,
 				"email_content": escape_html(comment or "")}).insert(ignore_permissions=True)
 
+	def _fresh(self):
+		"""Actions work on the saved record, not whatever the browser sent."""
+		if not self.is_new():
+			self.reload()
+		self.flags.server_action = True
+
 	def _check_unlocked(self):
 		if self.status in LOCKED_STATUSES:
 			frappe.throw(_("Proof is {0}. Use New Revision to make changes.").format(self.status))
 
 
+# ---------------------------------------------------------------------- print items
+def find_print_items(proof) -> list[str]:
+	"""Print items on the job's Sales Order(s), plus print parts inside their default BOMs."""
+	orders = set(filter(None, [proof.sales_order]))
+	if proof.project:
+		orders |= set(frappe.get_all("Sales Order", filters={"project": proof.project, "docstatus": ["<", 2]},
+			pluck="name"))
+	if not orders:
+		return []
+	groups = set(print_groups())
+	include_bom = cint(settings().include_bom_items)
+	found, seen = [], set()
+
+	def visit(code, depth=0):
+		if not code or code in seen or depth > 4:
+			return
+		seen.add(code)
+		item = frappe.db.get_value("Item", code, ["item_group", "default_bom"], as_dict=True)
+		if not item:
+			return
+		if item.item_group in groups:
+			found.append(code)
+		if include_bom:
+			bom = item.default_bom or frappe.db.get_value("BOM", {"item": code, "is_default": 1, "docstatus": 1}, "name")
+			if bom:
+				for child in frappe.get_all("BOM Item", filters={"parent": bom, "parenttype": "BOM"},
+						pluck="item_code", order_by="idx asc"):
+					visit(child, depth + 1)
+
+	for so in sorted(orders):
+		for code in frappe.get_all("Sales Order Item", filters={"parent": so, "parenttype": "Sales Order"},
+				pluck="item_code", order_by="idx asc"):
+			visit(code)
+	return found
+
+
 # ---------------------------------------------------------------------- status
 def computed_status(proof) -> str:
-	if proof.status in LOCKED_STATUSES:
-		return proof.status
-	comps = proof.components(["processing_status", "artwork_file"])
-	if not comps:
+	"""Derived from the rows, except for states set by an action (sent / approved / cancelled…)."""
+	current = proof.status or "Draft"
+	if current in LOCKED_STATUSES or proof.flags.get("status_set"):
+		return current
+	rows = proof.items
+	if not rows:
 		base = "Draft"
-	elif any(not c.artwork_file for c in comps):
+	elif any(not r.artwork_file for r in rows):
 		base = "Awaiting Artwork"
-	elif any(c.processing_status in ("Queued", "Processing") for c in comps):
+	elif any(r.processing_status in ("Queued", "Processing") for r in rows):
 		base = "Processing"
-	elif any(c.processing_status == "Failed" for c in comps):
+	elif any(r.processing_status in ("Failed", "Needs Setup") for r in rows):
 		base = "Needs Attention"
-	elif any(c.processing_status == "Not Processed" for c in comps):
+	elif any(r.processing_status == "Not Processed" for r in rows):
 		base = "Draft"
 	else:
 		base = "Ready for Review"
-	if proof.status in ("Sent to Customer", "Changes Requested") and base == "Ready for Review":
-		return proof.status
+	if current in ("Sent to Customer", "Changes Requested") and base == "Ready for Review":
+		return current
 	return base
 
 
@@ -267,20 +425,19 @@ def refresh_proof_status(name):
 	if new != proof.status:
 		frappe.db.set_value("Artwork Proof", name, "status", new)
 		sync_project_status(proof.project)
-	frappe.publish_realtime("artwork_proof_status", {"name": name, "status": new},
+	frappe.publish_realtime("artwork_proof_progress", {"name": name, "status": new, "done": True},
 		doctype="Artwork Proof", docname=name, after_commit=True)
 
 
 def sync_project_status(project):
 	if not project or not frappe.get_meta("Project").has_field("artwork_status"):
 		return
-	statuses = [s for s in frappe.get_all("Artwork Proof", filters={"project": project, "status": ["!=", "Cancelled"]},
-		pluck="status")]
-	if not statuses:
-		label = ""
-	elif all(s == "Approved" for s in statuses):
+	statuses = frappe.get_all("Artwork Proof", filters={"project": project, "status": ["!=", "Cancelled"]},
+		pluck="status")
+	label = ""
+	if statuses and all(s == "Approved" for s in statuses):
 		label = "Approved"
-	else:
+	elif statuses:
 		labels = {PROJECT_LABEL.get(s, "In Proofing") for s in statuses if s != "Approved"}
 		for candidate in ("Changes Requested", "Awaiting Artwork", "In Proofing", "Sent to Customer"):
 			if candidate in labels:

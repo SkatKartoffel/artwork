@@ -4,7 +4,7 @@ Turns customer-supplied artwork into print-ready, supplier-aligned PDFs with pro
 
 ## What it does
 
-For every **Artwork Component** (one printed part = one SKU, e.g. `PSG1234.P` jacket or `.L` labels):
+For every **print item** on a job (any Item in the **Print** item group, e.g. `PSG1234.P` jacket, `.L` labels), the app does the following:
 
 1. **Template alignment.** Places the art on the chosen supplier's template page, so the **art's spine centre lands exactly on the template's spine centre**.
    * The template spine comes from the fold lines in the template PDF (auto-detected), or from the *Spine Centre Override* on the template record.
@@ -43,18 +43,22 @@ For every **Artwork Component** (one printed part = one SKU, e.g. `PSG1234.P` ja
 ## Workflow
 
 ```
-Job Ticket (Project) ──► Artwork Proof ──► Artwork Component (per SKU part) ──► processed in background
-        ▲                    │  Request Artwork  → customer upload page (templates downloadable)
+Job Ticket (Project) ──► Artwork Proof ──► one row per print item (pulled from the Sales Order + BOMs)
+        ▲                    │  drop artwork into a row → processed automatically in the background
+        │                    │  Request Artwork  → customer upload page (templates downloadable)
         │                    │  Send to Customer → email + combined proof PDF + approval page
         └── artwork_status ◄─┘  Approve / Request changes (customer, tokenised link)
                                      │
-                     Item.approved_artwork ◄── print PDF of each component on approval
+                     Item.approved_artwork ◄── print-ready PDF of each row on approval
 ```
 
-* **Project** gets an *Artwork Status* field, an *Artwork* button group and an Artwork section on its dashboard.
-* **Item** gets *Default Supplier Template*, *Default Finish* (pre-fills new components) and, on approval, *Approved Print-Ready Artwork*, *Approved On Proof* and the approval date.
+* **One screen.** Everything happens on the **Artwork Proof**. Creating one for a Job Ticket automatically adds every print item on its Sales Order, including print parts inside the default BOMs of the ordered records (sleeves and labels usually sit in the BOM). You can also use *Actions → Get Print Items from Sales Order*, or add rows by hand; the item picker only shows Print items.
+* **Print spec lives on the Item.** Each print SKU has an *Artwork / Print Spec* section on the Item: Supplier Template, Finish, Convert Fonts to Outlines, and its Print Upgrades (Spot UV, foil… and how each is supplied). Set it once and represses reuse it automatically. A row whose Item has no spec shows **Needs Setup** with a message saying what's missing.
+* **Finish masks.** If an upgrade is supplied as a *Separate file*, the proof adds a mask row for it automatically (staff or the customer upload the black-only file there).
+* Dropping artwork into a row (or changing its page, nudge or mask) saves the proof and queues just that row. Each row shows its preview, status, warnings and files under the table.
 * Preflight **Errors must be ticked "OK'd"** (or fixed) before a proof can be sent. This can be switched off in settings.
-* Approved proofs are locked. **New Revision** reopens them, and the revision number goes up each time a proof is sent.
+* Approved proofs are locked; **New Revision** reopens them, and the revision number goes up each time a proof is sent.
+* **Job Ticket (Project)** gets an *Artwork Status* field and an Artwork section on its dashboard. On approval it also gets a timeline note, and each Item stores *Approved Print-Ready Artwork*, *Approved On Proof* and the approval date.
 * Other apps (e.g. `milomrp`) can react to customer decisions via hooks:
   ```python
   artwork_on_approve = ["milomrp.artwork_hooks.on_approve"]            # fn(proof_doc)
@@ -83,15 +87,16 @@ Python deps (`pikepdf`, `PyMuPDF`, `numpy`, `Pillow`) install automatically from
 
 1. **Artwork Colour Profile.** Attach the ICC files to the two seeded profiles:
    * `ISOcoated_v2_300_eci.icc` from eci.org (ECI offset profiles package).
-   * `EuroscaleUncoated.icc` ships with Adobe Creative Cloud: on a Mac it's in `/Library/Application Support/Adobe/Color/Profiles/Recommended/`.
+   * `EuroscaleUncoated.icc` ships with Adobe Creative Cloud.
 2. **Artwork Supplier Template.** One per supplier × product, e.g. *Takt – 12" Wide Spine 5mm*:
    * attach the supplier PDF and click **Detect Geometry**
    * check the trim size, bleed and spine width (set *Spine Centre Override* if detection misses)
    * use spine width 0 for labels and stickers
-3. **Artwork Print Upgrade.** Six are seeded. Edit the aliases to match how your customers name spots.
-4. **Artwork Settings.** Set the limits, template spot name, proof logo, header colour and email texts.
-5. **Item.** Optionally set *Default Supplier Template* and *Default Finish* on SKU items, so components fill themselves in.
-6. **Roles.** Give staff the **Artwork User** role; template, profile and settings admins need **Artwork Manager**.
+3. **Item Group "Print".** Created on install. Put your print SKUs in it, or in sub-groups such as Print › Labels. You can use a different group in Artwork Settings.
+4. **Each print Item.** Fill in its *Artwork / Print Spec* section: template, finish and upgrades.
+5. **Artwork Print Upgrade.** Six are seeded. Edit the aliases to match how your customers name spots.
+6. **Artwork Settings.** Set the limits, template spot name, proof logo, header colour and email texts.
+7. **Roles.** Give staff the **Artwork User** role; template, profile and settings admins need **Artwork Manager**.
 
 ## Code layout
 
@@ -105,7 +110,7 @@ artwork/engine/        framework-free PDF engine (testable without Frappe)
   preflight.py         warnings
   compose.py           final layered PDF (OCGs, overprint, boxes)
   preview.py           PNG preview + proof sheet
-artwork/processing.py  Frappe ↔ engine (background job, file handling)
+artwork/processing.py  Frappe ↔ engine (one background job per proof, file handling)
 artwork/api.py         desk helpers + guest portal endpoints
 artwork/www/           artwork_upload, artwork_approval (customer pages)
 artwork/tests/         fixtures + engine test

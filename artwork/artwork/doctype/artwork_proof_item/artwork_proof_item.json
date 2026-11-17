@@ -1,0 +1,216 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Artwork",
+ "name": "Artwork Proof Item",
+ "owner": "Administrator",
+ "modified_by": "Administrator",
+ "custom": 0,
+ "editable_grid": 1,
+ "field_order": [
+  "item",
+  "item_name",
+  "artwork_file",
+  "processing_status",
+  "error_count",
+  "approved",
+  "sb_opts",
+  "artwork_page",
+  "spine_offset_mm",
+  "cb_opts",
+  "supplier_template",
+  "finish",
+  "sb_out",
+  "print_file",
+  "proof_file",
+  "preview_image",
+  "cb_out",
+  "warning_count",
+  "processed_on",
+  "processing_error",
+  "alignment_info",
+  "ink_info",
+  "input_signature"
+ ],
+ "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Print Item",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "label": "Item Name",
+   "fetch_from": "item.item_name",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "artwork_file",
+   "fieldtype": "Attach",
+   "label": "Customer Artwork",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "processing_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Not Processed\nNeeds Setup\nQueued\nProcessing\nProcessed\nFailed",
+   "default": "Not Processed",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "error_count",
+   "fieldtype": "Int",
+   "label": "Errors",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "approved",
+   "fieldtype": "Check",
+   "label": "Approved",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "sb_opts",
+   "fieldtype": "Section Break",
+   "label": "Options"
+  },
+  {
+   "fieldname": "artwork_page",
+   "fieldtype": "Int",
+   "label": "Artwork Page",
+   "default": "1"
+  },
+  {
+   "fieldname": "spine_offset_mm",
+   "fieldtype": "Float",
+   "label": "Manual Spine Nudge (mm)",
+   "description": "+ moves the artwork's spine reference right."
+  },
+  {
+   "fieldname": "cb_opts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "supplier_template",
+   "fieldtype": "Link",
+   "label": "Supplier Template",
+   "options": "Artwork Supplier Template",
+   "read_only": 1,
+   "fetch_from": "item.artwork_template"
+  },
+  {
+   "fieldname": "finish",
+   "fieldtype": "Link",
+   "label": "Finish",
+   "options": "Artwork Finish",
+   "read_only": 1,
+   "fetch_from": "item.artwork_finish"
+  },
+  {
+   "fieldname": "sb_out",
+   "fieldtype": "Section Break",
+   "label": "Output"
+  },
+  {
+   "fieldname": "print_file",
+   "fieldtype": "Attach",
+   "label": "Print-Ready PDF",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "proof_file",
+   "fieldtype": "Attach",
+   "label": "Proof Sheet",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "preview_image",
+   "fieldtype": "Attach Image",
+   "label": "Preview",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "cb_out",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "warning_count",
+   "fieldtype": "Int",
+   "label": "Warnings",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "processed_on",
+   "fieldtype": "Datetime",
+   "label": "Processed On",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "processing_error",
+   "fieldtype": "Small Text",
+   "label": "Processing Error",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "alignment_info",
+   "fieldtype": "Small Text",
+   "label": "Alignment",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "ink_info",
+   "fieldtype": "Small Text",
+   "label": "Colour / Ink",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "input_signature",
+   "fieldtype": "Data",
+   "label": "Input Signature",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "issingle": 0,
+ "links": [],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0,
+ "quick_entry": 0
+}

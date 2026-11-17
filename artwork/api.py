@@ -8,44 +8,20 @@ import frappe
 from frappe import _
 from frappe.utils import cint, escape_html, get_datetime, now_datetime
 
-from artwork.processing import enqueue_component, file_path
+from artwork.processing import file_path
 
 
 # --------------------------------------------------------------------------- desk
 @frappe.whitelist()
-def proof_summary(proof: str):
-	doc = frappe.get_doc("Artwork Proof", proof)
-	doc.check_permission("read")
-	rows = []
-	for c in doc.components():
-		warns = frappe.get_all("Artwork Preflight Warning", filters={"parent": c.name, "parenttype": "Artwork Component",
-			"severity": ["in", ["Error", "Warning"]]}, fields=["severity", "message", "acknowledged"], order_by="idx asc")
-		c["issues"] = warns
-		rows.append(c)
-	return rows
-
-
-@frappe.whitelist()
-def new_component(proof: str, item: str | None = None):
-	"""Create a component on a proof, pre-filled from the item's artwork defaults."""
-	doc = frappe.get_doc("Artwork Proof", proof)
-	doc.check_permission("write")
-	comp = frappe.new_doc("Artwork Component")
-	comp.artwork_proof = proof
-	comp.item = item
-	return comp.as_dict()
-
-
-@frappe.whitelist()
-def item_defaults(item: str):
-	meta = frappe.get_meta("Item")
-	out = {}
-	for f in ("default_artwork_template", "default_artwork_finish"):
-		if meta.has_field(f):
-			out[f] = frappe.db.get_value("Item", item, f)
-	if out.get("default_artwork_template"):
-		out["supplier"] = frappe.db.get_value("Artwork Supplier Template", out["default_artwork_template"], "supplier")
-	return out
+def item_proofs(item: str):
+	"""Artwork Proofs that include this print item (for the Item form)."""
+	frappe.has_permission("Artwork Proof", "read", throw=True)
+	parents = frappe.get_all("Artwork Proof Item", filters={"item": item, "parenttype": "Artwork Proof"},
+		pluck="parent")
+	if not parents:
+		return []
+	return frappe.get_all("Artwork Proof", filters={"name": ["in", parents]},
+		fields=["name", "title", "status", "revision", "project", "modified"], order_by="modified desc", limit=50)
 
 
 # --------------------------------------------------------------------------- portal auth
@@ -100,43 +76,37 @@ def customer_respond(proof: str, key: str, action: str, name: str, comments: str
 	frappe.throw(_("Unknown action"))
 
 
+ALLOWED_EXT = (".pdf", ".ai", ".eps", ".tif", ".tiff", ".jpg", ".jpeg", ".png", ".psd")
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
-def customer_upload(proof: str, key: str, component: str, target: str = "artwork", row: str | None = None):
-	"""Customer uploads artwork (or an upgrade mask) for one component."""
+def customer_upload(proof: str, key: str, row: str, target: str = "artwork"):
+	"""Customer uploads artwork (target=artwork, row=print item row) or a finish mask (target=mask, row=mask row)."""
 	doc = get_portal_proof(proof, key)
 	if doc.status in ("Approved", "Sent to Customer"):
 		frappe.throw(_("Artwork can't be changed while a proof is awaiting approval or approved. "
 			"Use 'Request changes' instead."))
-	comp = frappe.get_doc("Artwork Component", component)
-	if comp.artwork_proof != doc.name:
+	table = doc.items if target == "artwork" else doc.masks
+	r = next((x for x in table if x.name == row), None)
+	if r is None:
 		raise frappe.PermissionError
 	files = frappe.request.files
 	if "file" not in files:
 		frappe.throw(_("No file received."))
 	up = files["file"]
-	content = up.stream.read()
 	fname = os.path.basename(up.filename or "artwork.pdf")
-	ext = os.path.splitext(fname)[1].lower()
-	if ext not in (".pdf", ".ai", ".eps", ".tif", ".tiff", ".jpg", ".jpeg", ".png", ".psd"):
+	if os.path.splitext(fname)[1].lower() not in ALLOWED_EXT:
 		frappe.throw(_("Please upload a PDF, AI, EPS, TIFF, JPG or PNG file."))
 	f = frappe.get_doc({
-		"doctype": "File", "file_name": fname, "is_private": 1, "content": content,
-		"attached_to_doctype": "Artwork Component", "attached_to_name": comp.name,
-		"attached_to_field": "artwork_file" if target == "artwork" else "upgrades",
+		"doctype": "File", "file_name": fname, "is_private": 1, "content": up.stream.read(),
+		"attached_to_doctype": "Artwork Proof", "attached_to_name": doc.name,
 	})
 	f.insert(ignore_permissions=True)
 	if target == "artwork":
-		comp.artwork_file = f.file_url
+		r.artwork_file = f.file_url
 	else:
-		r = next((u for u in comp.upgrades if u.name == row), None)
-		if not r:
-			frappe.throw(_("Unknown upgrade row."))
 		r.mask_file = f.file_url
-		r.source = "Separate file"
-	comp.flags.ignore_permissions = True
-	comp.save()
-	doc.reload()
-	doc.add_log("Customer upload", f"{comp.item}: {fname}", by=f"Customer ({_ip()})")
+	doc.add_log("Customer upload", f"{r.item}: {fname}", by=f"Customer ({_ip()})")
 	doc.flags.ignore_permissions = True
 	doc.save()
 	frappe.db.commit()
@@ -144,22 +114,23 @@ def customer_upload(proof: str, key: str, component: str, target: str = "artwork
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
-def portal_file(proof: str, key: str, kind: str, component: str | None = None):
+def portal_file(proof: str, key: str, kind: str, row: str | None = None):
 	"""Stream a private file to the customer: preview / proof / template / combined proof."""
 	doc = get_portal_proof(proof, key)
 	url = None
 	if kind == "combined":
 		url = doc.proof_pdf
 	else:
-		comp = frappe.get_doc("Artwork Component", component)
-		if comp.artwork_proof != doc.name:
+		r = next((x for x in doc.items if x.name == row), None)
+		if r is None:
 			raise frappe.PermissionError
 		if kind == "preview":
-			url = comp.preview_image
+			url = r.preview_image
 		elif kind == "proof":
-			url = comp.proof_file
+			url = r.proof_file
 		elif kind == "template":
-			url = frappe.db.get_value("Artwork Supplier Template", comp.supplier_template, "template_file")
+			tpl = frappe.db.get_value("Item", r.item, "artwork_template")
+			url = frappe.db.get_value("Artwork Supplier Template", tpl, "template_file") if tpl else None
 	path = file_path(url)
 	if not path or not os.path.exists(path):
 		raise frappe.DoesNotExistError(_("File not available"))
@@ -175,32 +146,43 @@ def portal_file(proof: str, key: str, kind: str, component: str | None = None):
 def portal_context(proof: str, key: str):
 	"""Shared context for the two portal pages."""
 	doc = get_portal_proof(proof, key)
-	comps = []
-	for c in doc.components():
-		comp = frappe.get_doc("Artwork Component", c.name)
-		tpl = frappe.get_cached_doc("Artwork Supplier Template", comp.supplier_template) if comp.supplier_template else None
-		comps.append({
-			"name": comp.name,
-			"title": f"{comp.component_type or 'Artwork'} – {comp.item_name or comp.item}",
-			"item": comp.item,
-			"finish": comp.finish,
+	rows = []
+	for r in doc.items:
+		tpl_name = frappe.db.get_value("Item", r.item, "artwork_template")
+		tpl = frappe.get_cached_doc("Artwork Supplier Template", tpl_name) if tpl_name else None
+		rows.append({
+			"row": r.name,
+			"title": r.item_name or r.item,
+			"item": r.item,
+			"finish": r.finish or "",
 			"template": tpl.template_name if tpl else "",
 			"spec": (f"Trim {tpl.trim_width_mm or '?'} × {tpl.trim_height_mm or '?'} mm · bleed {tpl.bleed_mm or 3} mm"
-				+ (f" · spine {tpl.spine_width_mm} mm" if tpl and tpl.spine_width_mm else "")) if tpl else "",
-			"has_artwork": bool(comp.artwork_file),
-			"status": comp.processing_status,
-			"has_preview": bool(comp.preview_image),
-			"issues": [{"severity": w.severity, "message": escape_html(w.message)} for w in comp.warnings
-				if w.severity in ("Error", "Warning")],
-			"upgrades": [{"row": u.name, "upgrade": u.upgrade, "source": u.source, "has_file": bool(u.mask_file)}
-				for u in comp.upgrades],
+				+ (f" · spine {tpl.spine_width_mm} mm" if tpl.spine_width_mm else "")) if tpl else "",
+			"has_template": bool(tpl and tpl.template_file),
+			"has_artwork": bool(r.artwork_file),
+			"status": r.processing_status,
+			"has_preview": bool(r.preview_image),
+			"issues": [{"severity": w.severity, "message": escape_html(w.message)} for w in doc.warnings
+				if w.row_ref == r.name and w.severity in ("Error", "Warning")],
+			"upgrades": [u.upgrade for u in frappe.get_all("Artwork Item Upgrade",
+				filters={"parent": r.item, "parenttype": "Item"}, fields=["upgrade"], order_by="idx asc")],
+			"masks": [{"row": m.name, "upgrade": m.upgrade, "has_file": bool(m.mask_file)}
+				for m in doc.masks if m.item == r.item],
 		})
-	return doc, comps
+	return doc, rows
 
 
 @frappe.whitelist()
-def reprocess(component: str):
-	comp = frappe.get_doc("Artwork Component", component)
-	comp.check_permission("write")
-	enqueue_component(component)
-	return "Queued"
+@frappe.validate_and_sanitize_search_inputs
+def print_item_query(doctype, txt, searchfield, start, page_len, filters):
+	"""Item search limited to the Print item group (and its sub-groups)."""
+	from artwork.processing import print_groups
+
+	groups = print_groups()
+	conditions = {"disabled": 0}
+	if groups:
+		conditions["item_group"] = ["in", groups]
+	return frappe.get_all("Item", filters=conditions,
+		or_filters={"name": ["like", f"%{txt}%"], "item_name": ["like", f"%{txt}%"]},
+		fields=["name", "item_name", "item_group"], start=start, page_length=page_len, order_by="name asc",
+		as_list=True)

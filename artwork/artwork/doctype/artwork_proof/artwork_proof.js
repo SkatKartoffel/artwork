@@ -5,35 +5,36 @@ const ART_STATUS_COLOUR = {
 	"Ready for Review": "purple", "Sent to Customer": "cyan", "Changes Requested": "yellow",
 	"Approved": "green", "Cancelled": "gray",
 };
+const ROW_COLOUR = { Processed: "green", Failed: "red", "Needs Setup": "orange", Processing: "blue", Queued: "blue" };
 
 frappe.ui.form.on("Artwork Proof", {
 	setup(frm) {
 		frm.set_query("project", () => ({ filters: { status: ["!=", "Cancelled"] } }));
+		frm.set_query("item", "items", () => ({ query: "artwork.api.print_item_query" }));
 	},
 
 	onload(frm) {
-		frappe.realtime.off("artwork_component_status");
-		frappe.realtime.on("artwork_component_status", (d) => {
-			if (d.artwork_proof === frm.doc.name) {
-				frm.events.render_components(frm);
-				if (["Processed", "Failed"].includes(d.status)) frm.reload_doc();
+		frappe.realtime.off("artwork_proof_progress");
+		frappe.realtime.on("artwork_proof_progress", (d) => {
+			if (d.name !== frm.doc.name) return;
+			if (d.done || ["Processed", "Failed", "Needs Setup"].includes(d.status)) {
+				if (!frm.is_dirty()) frm.reload_doc();
+			} else if (d.item) {
+				frm.events.render_items(frm, { [d.item]: d.status });
 			}
 		});
 	},
 
 	refresh(frm) {
 		frm.page.set_indicator(__(frm.doc.status), ART_STATUS_COLOUR[frm.doc.status] || "gray");
-		frm.events.render_components(frm);
+		frm.events.render_items(frm);
 		if (frm.is_new()) return;
 		const locked = ["Approved", "Cancelled"].includes(frm.doc.status);
+		const act = (label, method, args, group) => frm.add_custom_button(label, () => frm.events.run(frm, method, args), group);
 
 		if (!locked) {
-			frm.add_custom_button(__("Add Component"), () => frm.events.add_component(frm));
-			frm.add_custom_button(__("Process All"), () =>
-				frm.call("process_all").then((r) => {
-					frappe.show_alert({ message: __("{0} component(s) queued", [r.message || 0]), indicator: "blue" });
-					frm.reload_doc();
-				}), __("Actions"));
+			act(__("Get Print Items from Sales Order"), "get_print_items", {}, __("Actions"));
+			act(__("Process All Artwork"), "process", {}, __("Actions"));
 			frm.add_custom_button(__("Request Artwork from Customer"), () =>
 				frm.events.email_dialog(frm, "request_artwork", __("Request artwork")), __("Actions"));
 			if (["Ready for Review", "Sent to Customer", "Changes Requested"].includes(frm.doc.status)) {
@@ -41,33 +42,30 @@ frappe.ui.form.on("Artwork Proof", {
 					frm.events.email_dialog(frm, "send_to_customer", __("Send proof")));
 				frm.change_custom_button_type(__("Send Proof to Customer"), null, "primary");
 			}
+			frm.add_custom_button(__("Cancel Proof"), () =>
+				frappe.confirm(__("Cancel this proof?"), () => frm.events.run(frm, "cancel_proof")), __("Actions"));
 		}
 		if (["Approved", "Sent to Customer", "Changes Requested"].includes(frm.doc.status)) {
 			frm.add_custom_button(__("New Revision"), () =>
 				frappe.confirm(__("Reopen this proof for changes? The customer will need to approve again."),
-					() => frm.call("new_revision").then(() => frm.reload_doc())), __("Actions"));
+					() => frm.events.run(frm, "new_revision")), __("Actions"));
 		}
 		frm.add_custom_button(__("Copy Approval Link"), () => frm.events.copy_link(frm, "artwork_approval"), __("Customer Links"));
 		frm.add_custom_button(__("Copy Upload Link"), () => frm.events.copy_link(frm, "artwork_upload"), __("Customer Links"));
-		if (!locked) {
-			frm.add_custom_button(__("Cancel Proof"), () =>
-				frappe.confirm(__("Cancel this proof?"), () => frm.call("cancel_proof").then(() => frm.reload_doc())),
-				__("Actions"));
-		}
-		if (frm.doc.project) {
-			frm.add_custom_button(__("Job Ticket"), () => frappe.set_route("Form", "Project", frm.doc.project), __("View"));
-		}
-		if (frm.doc.proof_pdf) {
-			frm.add_custom_button(__("Combined Proof PDF"), () => window.open(frm.doc.proof_pdf), __("View"));
-		}
+		if (frm.doc.project) frm.add_custom_button(__("Job Ticket"), () => frappe.set_route("Form", "Project", frm.doc.project), __("View"));
+		if (frm.doc.proof_pdf) frm.add_custom_button(__("Combined Proof PDF"), () => window.open(frm.doc.proof_pdf), __("View"));
 	},
 
-	add_component(frm) {
-		frappe.model.with_doctype("Artwork Component", () => {
-			const doc = frappe.model.get_new_doc("Artwork Component");
-			doc.artwork_proof = frm.doc.name;
-			frappe.set_route("Form", "Artwork Component", doc.name);
-		});
+	// Save pending edits first, then run a server action on the saved record.
+	async run(frm, method, args = {}) {
+		if (frm.is_dirty()) await frm.save();
+		const r = await frm.call(method, args);
+		const msg = {
+			get_print_items: (m) => (m && m.length ? __("Added {0}", [m.join(", ")]) : __("No new print items found on the Sales Order")),
+			process: (m) => __("{0} item(s) queued for processing", [m]),
+		}[method];
+		if (msg) frappe.show_alert({ message: msg(r.message), indicator: "blue" });
+		frm.reload_doc();
 	},
 
 	copy_link(frm, page) {
@@ -81,61 +79,75 @@ frappe.ui.form.on("Artwork Proof", {
 		const d = new frappe.ui.Dialog({
 			title,
 			fields: [
-				{ fieldname: "recipients", fieldtype: "Data", label: __("To"), options: "Email", reqd: 1,
-					default: frm.doc.contact_email },
+				{ fieldname: "recipients", fieldtype: "Data", label: __("To"), options: "Email", reqd: 1, default: frm.doc.contact_email },
 				{ fieldname: "message", fieldtype: "Text Editor", label: __("Message (optional)"),
 					description: __("Leave blank to use the standard text from Artwork Settings.") },
 			],
 			primary_action_label: __("Send"),
 			primary_action(values) {
 				d.hide();
-				frm.call(method, values).then((r) => {
-					frappe.show_alert({ message: __("Sent"), indicator: "green" });
-					frm.reload_doc();
-				});
+				frm.events.run(frm, method, values).then(() => frappe.show_alert({ message: __("Sent"), indicator: "green" }));
 			},
 		});
 		d.show();
 	},
 
-	render_components(frm) {
-		const wrap = frm.get_field("components_html").$wrapper;
-		if (frm.is_new()) {
-			wrap.html(`<p class="text-muted">${__("Save first, then add components (one per printed SKU part).")}</p>`);
+	render_items(frm, live = {}) {
+		const wrap = frm.get_field("items_html").$wrapper;
+		const rows = frm.doc.items || [];
+		if (!rows.length) {
+			wrap.html(`<p class="text-muted">${frm.doc.sales_order
+				? __("No print items yet. Use <b>Actions → Get Print Items from Sales Order</b>, or add them to the table above.")
+				: __("Link the Job Ticket's Sales Order, or add print items to the table above.")}</p>`);
 			return;
 		}
-		frappe.call("artwork.api.proof_summary", { proof: frm.doc.name }).then((r) => {
-			const rows = r.message || [];
-			if (!rows.length) {
-				wrap.html(`<p class="text-muted">${__("No components yet. Use <b>Add Component</b> for each printed part (sleeve, labels, inserts…).")}</p>`);
-				return;
-			}
-			const pill = (s) => {
-				const c = { Processed: "green", Failed: "red", Processing: "blue", Queued: "blue" }[s] || "gray";
-				return `<span class="indicator-pill ${c}">${__(s)}</span>`;
-			};
-			const html = rows.map((c) => {
-				const thumb = c.preview_image
-					? `<img src="${c.preview_image}" style="width:220px;max-height:140px;object-fit:contain;background:#f3f3f3;border-radius:6px">`
-					: `<div style="width:220px;height:110px;background:#f3f3f3;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999">${c.artwork_file ? __("Not processed") : __("No artwork")}</div>`;
-				const issues = (c.issues || []).map((w) =>
-					`<div style="font-size:12px;${w.acknowledged ? "opacity:.5;text-decoration:line-through" : ""}">
-						<span class="indicator ${w.severity === "Error" ? "red" : "orange"}"></span>${frappe.utils.escape_html(w.message)}</div>`).join("");
-				return `<div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--border-color)">
-					<a href="/app/artwork-component/${c.name}">${thumb}</a>
-					<div style="flex:1;min-width:0">
-						<div><a href="/app/artwork-component/${c.name}"><b>${frappe.utils.escape_html(c.component_type || "")}</b>
-							&nbsp;${frappe.utils.escape_html(c.item)} · ${frappe.utils.escape_html(c.item_name || "")}</a>
-							&nbsp;${pill(c.processing_status)} ${c.approved ? '<span class="indicator-pill green">Approved</span>' : ""}</div>
-						<div class="text-muted small">${frappe.utils.escape_html(c.supplier_template || "")} · ${frappe.utils.escape_html(c.finish || "")}</div>
-						<div style="margin-top:6px">${issues || '<span class="text-muted small">' + __("No preflight issues") + "</span>"}</div>
-						<div style="margin-top:6px" class="small">
-							${c.print_file ? `<a href="${c.print_file}" target="_blank">${__("Print PDF")}</a> · ` : ""}
-							${c.proof_file ? `<a href="${c.proof_file}" target="_blank">${__("Proof sheet")}</a>` : ""}
-						</div>
-					</div></div>`;
-			}).join("");
-			wrap.html(html);
+		const esc = frappe.utils.escape_html;
+		const html = rows.map((r) => {
+			const status = live[r.item] || r.processing_status || "Not Processed";
+			const issues = (frm.doc.warnings || []).filter((w) => w.row_ref === r.name && w.severity !== "Info");
+			const thumb = r.preview_image
+				? `<a href="${r.preview_image}" target="_blank"><img src="${r.preview_image}?v=${encodeURIComponent(r.processed_on || "")}"
+					style="width:260px;max-height:150px;object-fit:contain;background:#f3f3f3;border-radius:6px"></a>`
+				: `<div style="width:260px;height:120px;background:#f3f3f3;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;text-align:center;padding:8px">
+					${r.artwork_file ? esc(__(status)) : __("Drop the customer's artwork into the row above")}</div>`;
+			const issueHtml = issues.map((w) => `<div class="small" style="${w.acknowledged ? "opacity:.45;text-decoration:line-through" : ""}">
+				<span class="indicator ${w.severity === "Error" ? "red" : "orange"}"></span>${esc(w.message)}</div>`).join("");
+			const files = [
+				r.print_file ? `<a href="${r.print_file}" target="_blank">${__("Print PDF")}</a>` : "",
+				r.proof_file ? `<a href="${r.proof_file}" target="_blank">${__("Proof sheet")}</a>` : "",
+				r.artwork_file ? `<a href="${r.artwork_file}" target="_blank">${__("Customer file")}</a>` : "",
+			].filter(Boolean).join(" · ");
+			const err = ["Failed", "Needs Setup"].includes(status) && r.processing_error
+				? `<div class="small text-danger">${esc(r.processing_error)}</div>` : "";
+			const canReprocess = r.artwork_file && !["Queued", "Processing"].includes(status)
+				&& !["Approved", "Cancelled"].includes(frm.doc.status) && !frm.is_new();
+			return `<div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--border-color)">
+				${thumb}
+				<div style="flex:1;min-width:0">
+					<div><a href="/app/item/${encodeURIComponent(r.item || "")}"><b>${esc(r.item || "")}</b></a> · ${esc(r.item_name || "")}
+						&nbsp;<span class="indicator-pill ${ROW_COLOUR[status] || "gray"}">${esc(__(status))}</span>
+						${r.approved ? '<span class="indicator-pill green">' + __("Approved") + "</span>" : ""}</div>
+					<div class="text-muted small">${esc(r.supplier_template || __("no template set on Item"))} · ${esc(r.finish || __("no finish set on Item"))}</div>
+					${err}
+					<div style="margin-top:6px">${issueHtml || (status === "Processed" ? '<span class="text-muted small">' + __("No preflight issues") + "</span>" : "")}</div>
+					<div class="small" style="margin-top:6px">${files}
+						${canReprocess ? `${files ? " · " : ""}<a href="#" data-reprocess="${r.name}">${__("Re-process")}</a>` : ""}</div>
+				</div></div>`;
+		}).join("");
+		wrap.html(html);
+		wrap.find("[data-reprocess]").on("click", (e) => {
+			e.preventDefault();
+			frm.events.run(frm, "process", { row: $(e.currentTarget).attr("data-reprocess") });
 		});
 	},
+});
+
+frappe.ui.form.on("Artwork Proof Item", {
+	// Save straight away so processing starts as soon as artwork is dropped in.
+	artwork_file(frm) { if (!frm.is_new()) frm.save(); },
+	items_remove(frm) { frm.events.render_items(frm); },
+});
+
+frappe.ui.form.on("Artwork Proof Mask", {
+	mask_file(frm) { if (!frm.is_new()) frm.save(); },
 });

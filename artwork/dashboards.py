@@ -1,20 +1,9 @@
-def _add(data, label, items):
+def project_dashboard(data):
 	data.setdefault("transactions", [])
 	for t in data["transactions"]:
-		if t.get("label") == label:
-			t["items"] = list(dict.fromkeys([*t["items"], *items]))
+		if t.get("label") == "Artwork":
+			if "Artwork Proof" not in t["items"]:
+				t["items"].append("Artwork Proof")
 			return data
-	data["transactions"].append({"label": label, "items": items})
+	data["transactions"].append({"label": "Artwork", "items": ["Artwork Proof"]})
 	return data
-
-
-def project_dashboard(data):
-	data.setdefault("non_standard_fieldnames", {})
-	data["non_standard_fieldnames"]["Artwork Component"] = "project"
-	return _add(data, "Artwork", ["Artwork Proof", "Artwork Component"])
-
-
-def item_dashboard(data):
-	data.setdefault("non_standard_fieldnames", {})
-	data["non_standard_fieldnames"]["Artwork Component"] = "item"
-	return _add(data, "Artwork", ["Artwork Component"])

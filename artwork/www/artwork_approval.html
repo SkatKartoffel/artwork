@@ -26,12 +26,12 @@
 		{% for c in components %}
 		<div class="aw-card">
 			<h3>{{ c.title }}</h3>
-			<div class="aw-muted">SKU {{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
+			<div class="aw-muted">{{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
 			{% if c.has_preview %}
-				<a href="{{ file_base }}&kind=proof&component={{ c.name }}" target="_blank">
-					<img class="aw-prev" src="{{ file_base }}&kind=preview&component={{ c.name }}" alt="{{ c.title }}"></a>
+				<a href="{{ file_base }}&kind=proof&row={{ c.row }}" target="_blank">
+					<img class="aw-prev" src="{{ file_base }}&kind=preview&row={{ c.row }}" alt="{{ c.title }}"></a>
 			{% endif %}
-			{% if c.upgrades %}<div class="aw-muted">Special finishes: {% for u in c.upgrades %}{{ u.upgrade }}{% if not loop.last %}, {% endif %}{% endfor %} (shown as coloured overlays)</div>{% endif %}
+			{% if c.upgrades %}<div class="aw-muted">Special finishes: {{ c.upgrades | join(", ") }} (shown as coloured overlays)</div>{% endif %}
 			{% for w in c.issues %}<div class="aw-issue {{ w.severity }}"><b>{{ w.severity }}:</b> {{ w.message }}</div>{% endfor %}
 		</div>
 		{% endfor %}

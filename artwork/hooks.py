@@ -26,7 +26,6 @@ doctype_js = {
 }
 override_doctype_dashboards = {
 	"Project": "artwork.dashboards.project_dashboard",
-	"Item": "artwork.dashboards.item_dashboard",
 }
 
 # Other apps (e.g. milomrp) can react to customer decisions:

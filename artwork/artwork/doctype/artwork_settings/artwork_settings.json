@@ -12,6 +12,9 @@
  "custom": 0,
  "editable_grid": 0,
  "field_order": [
+  "sb_items",
+  "print_item_group",
+  "include_bom_items",
   "sb_proc",
   "ghostscript_path",
   "auto_process",
@@ -43,6 +46,26 @@
   "upload_email_intro"
  ],
  "fields": [
+  {
+   "fieldname": "sb_items",
+   "fieldtype": "Section Break",
+   "label": "Print Items"
+  },
+  {
+   "fieldname": "print_item_group",
+   "fieldtype": "Link",
+   "label": "Print Item Group",
+   "options": "Item Group",
+   "default": "Print",
+   "description": "Items in this group (and its sub-groups) are treated as print parts that need artwork."
+  },
+  {
+   "fieldname": "include_bom_items",
+   "fieldtype": "Check",
+   "label": "Also Find Print Items in BOMs",
+   "default": "1",
+   "description": "When pulling from a Sales Order, also add print parts from the default BOMs of the ordered items."
+  },
   {
    "fieldname": "sb_proc",
    "fieldtype": "Section Break",

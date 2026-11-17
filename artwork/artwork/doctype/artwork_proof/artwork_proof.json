@@ -16,16 +16,20 @@
   "title",
   "project",
   "project_name",
+  "sales_order",
   "cb1",
   "status",
   "revision",
   "customer",
-  "sales_order",
   "cb2",
   "contact_email",
   "cc_emails",
-  "sb_comp",
-  "components_html",
+  "sb_items",
+  "items",
+  "masks",
+  "items_html",
+  "sb_warn",
+  "warnings",
   "sb_approval",
   "sent_on",
   "link_expires",
@@ -76,6 +80,14 @@
    "read_only": 1
   },
   {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order",
+   "fetch_from": "project.sales_order",
+   "fetch_if_empty": 1
+  },
+  {
    "fieldname": "cb1",
    "fieldtype": "Column Break"
   },
@@ -87,8 +99,7 @@
    "default": "Draft",
    "read_only": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1,
-   "allow_on_submit": 1
+   "in_standard_filter": 1
   },
   {
    "fieldname": "revision",
@@ -107,14 +118,6 @@
    "in_standard_filter": 1
   },
   {
-   "fieldname": "sales_order",
-   "fieldtype": "Link",
-   "label": "Sales Order",
-   "options": "Sales Order",
-   "fetch_from": "project.sales_order",
-   "fetch_if_empty": 1
-  },
-  {
    "fieldname": "cb2",
    "fieldtype": "Column Break"
   },
@@ -130,14 +133,41 @@
    "label": "CC"
   },
   {
-   "fieldname": "sb_comp",
+   "fieldname": "sb_items",
    "fieldtype": "Section Break",
-   "label": "Components"
+   "label": "Print Items"
   },
   {
-   "fieldname": "components_html",
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Print Items",
+   "options": "Artwork Proof Item"
+  },
+  {
+   "fieldname": "masks",
+   "fieldtype": "Table",
+   "label": "Finish Mask Files",
+   "options": "Artwork Proof Mask",
+   "depends_on": "eval:(doc.masks||[]).length",
+   "description": "Only for finishes supplied as a separate black-only file."
+  },
+  {
+   "fieldname": "items_html",
    "fieldtype": "HTML",
-   "label": "Components"
+   "label": "Proofs"
+  },
+  {
+   "fieldname": "sb_warn",
+   "fieldtype": "Section Break",
+   "label": "Preflight",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "warnings",
+   "fieldtype": "Table",
+   "label": "Preflight Results",
+   "options": "Artwork Preflight Warning",
+   "no_copy": 1
   },
   {
    "fieldname": "sb_approval",
@@ -231,13 +261,7 @@
  "index_web_pages_for_search": 0,
  "istable": 0,
  "issingle": 0,
- "links": [
-  {
-   "link_doctype": "Artwork Component",
-   "link_fieldname": "artwork_proof",
-   "group": "Components"
-  }
- ],
+ "links": [],
  "permissions": [
   {
    "role": "System Manager",

@@ -18,7 +18,7 @@ def build_context(context, page):
 	try:
 		from artwork.api import portal_context
 
-		doc, comps = portal_context(proof, key)
+		doc, rows = portal_context(proof, key)
 	except (frappe.PermissionError, frappe.DoesNotExistError) as e:
 		context.error = str(e) or _("This link is not valid.")
 		frappe.clear_messages()
@@ -27,7 +27,7 @@ def build_context(context, page):
 		project_name=doc.project_name or doc.project, has_combined=bool(doc.proof_pdf),
 		responded_by=(doc.responded_by or "").split(" (")[0], responded_on=doc.responded_on)
 	context.key = key
-	context.components = comps
+	context.components = rows
 	context.file_base = f"/api/method/artwork.api.portal_file?proof={doc.name}&key={key}"
 	context.title = f"{context.company} · {doc.title or doc.name}"
 	return context

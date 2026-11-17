@@ -6,7 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "module": "Artwork",
- "name": "Artwork Component Upgrade",
+ "name": "Artwork Item Upgrade",
  "owner": "Administrator",
  "modified_by": "Administrator",
  "custom": 0,
@@ -14,9 +14,7 @@
  "field_order": [
   "upgrade",
   "source",
-  "mask_file",
-  "page",
-  "spot_name"
+  "page"
  ],
  "fields": [
   {
@@ -26,7 +24,7 @@
    "options": "Artwork Print Upgrade",
    "reqd": 1,
    "in_list_view": 1,
-   "columns": 3
+   "columns": 4
   },
   {
    "fieldname": "source",
@@ -35,15 +33,7 @@
    "options": "Artwork spot\nSeparate file\nArtwork page",
    "default": "Artwork spot",
    "in_list_view": 1,
-   "columns": 2
-  },
-  {
-   "fieldname": "mask_file",
-   "fieldtype": "Attach",
-   "label": "Mask File",
-   "in_list_view": 1,
-   "columns": 3,
-   "depends_on": "eval:doc.source=='Separate file'"
+   "columns": 3
   },
   {
    "fieldname": "page",
@@ -51,14 +41,8 @@
    "label": "Page",
    "in_list_view": 1,
    "columns": 1,
-   "depends_on": "eval:doc.source!='Artwork spot'"
-  },
-  {
-   "fieldname": "spot_name",
-   "fieldtype": "Data",
-   "label": "Spot Name",
-   "fetch_from": "upgrade.spot_name",
-   "read_only": 1
+   "depends_on": "eval:doc.source=='Artwork page'",
+   "description": "Page of the customer's PDF holding this layer (for 'Artwork page')."
   }
  ],
  "index_web_pages_for_search": 0,

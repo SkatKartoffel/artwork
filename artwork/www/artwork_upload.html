@@ -15,21 +15,24 @@
 		<p>Upload print-ready artwork for each part below. <b>PDF with fonts embedded and 3mm bleed</b> is best; AI, EPS, TIFF, JPG and PNG are accepted.
 		Build your artwork on the template supplied and keep images at 300dpi or more. Supply special finishes (spot UV, foil) as named spot colours or as a separate black-only file.</p>
 		{% for c in components %}
-		<div class="aw-card" data-component="{{ c.name }}">
+		<div class="aw-card" data-row="{{ c.row }}">
 			<h3>{{ c.title }} {% if c.has_artwork %}<span class="aw-pill ok">artwork received</span>{% endif %}</h3>
-			<div class="aw-muted">SKU {{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
+			<div class="aw-muted">{{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
+			{% if c.upgrades %}<div class="aw-muted">Special finishes: {{ c.upgrades | join(", ") }}</div>{% endif %}
+			{% if c.has_template %}
 			<div class="aw-row">
-				<a class="aw-btn ghost" href="{{ file_base }}&kind=template&component={{ c.name }}">Download template</a>
+				<a class="aw-btn ghost" href="{{ file_base }}&kind=template&row={{ c.row }}">Download template</a>
 			</div>
+			{% endif %}
 			<div class="aw-row">
 				<input type="file" data-target="artwork" accept=".pdf,.ai,.eps,.tif,.tiff,.jpg,.jpeg,.png">
-				<button class="aw-btn primary" data-upload="artwork">Upload artwork</button>
+				<button class="aw-btn primary" data-upload="artwork" data-ref="{{ c.row }}">Upload artwork</button>
 			</div>
-			{% for u in c.upgrades %}
+			{% for m in c.masks %}
 			<div class="aw-row">
-				<span style="min-width:150px"><b>{{ u.upgrade }}</b> mask {% if u.has_file %}<span class="aw-pill ok">received</span>{% endif %}</span>
-				<input type="file" data-target="upgrade" data-row="{{ u.row }}" accept=".pdf,.ai,.eps,.tif,.tiff,.png">
-				<button class="aw-btn ghost" data-upload="upgrade" data-row="{{ u.row }}">Upload</button>
+				<span style="min-width:150px"><b>{{ m.upgrade }}</b> mask {% if m.has_file %}<span class="aw-pill ok">received</span>{% endif %}</span>
+				<input type="file" data-target="mask" data-ref="{{ m.row }}" accept=".pdf,.ai,.eps,.tif,.tiff,.png">
+				<button class="aw-btn ghost" data-upload="mask" data-ref="{{ m.row }}">Upload</button>
 			</div>
 			{% endfor %}
 			<div class="aw-result"></div>
@@ -41,18 +44,17 @@
 <script>
 (function () {
 	document.querySelectorAll("[data-upload]").forEach((btn) => btn.addEventListener("click", async () => {
-		const card = btn.closest("[data-component]");
+		const card = btn.closest("[data-row]");
 		const target = btn.dataset.upload;
-		const row = btn.dataset.row || "";
-		const input = card.querySelector(target === "artwork" ? 'input[data-target="artwork"]' : `input[data-row="${row}"]`);
+		const ref = btn.dataset.ref;
+		const input = card.querySelector(target === "artwork" ? 'input[data-target="artwork"]' : `input[data-ref="${ref}"]`);
 		const out = card.querySelector(".aw-result");
 		if (!input.files.length) { out.innerHTML = '<div class="aw-msg err">Choose a file first.</div>'; return; }
 		const fd = new FormData();
-		fd.append("proof", {{ proof.name | tojson if proof else '""' }});
-		fd.append("key", {{ key | tojson if key else '""' }});
-		fd.append("component", card.dataset.component);
+		fd.append("proof", {{ proof.name | tojson }});
+		fd.append("key", {{ key | tojson }});
+		fd.append("row", ref);
 		fd.append("target", target);
-		fd.append("row", row);
 		fd.append("file", input.files[0]);
 		btn.disabled = true; btn.textContent = "Uploading…";
 		try {

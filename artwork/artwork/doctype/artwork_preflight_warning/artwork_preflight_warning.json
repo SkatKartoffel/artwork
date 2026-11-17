@@ -12,12 +12,23 @@
  "custom": 0,
  "editable_grid": 1,
  "field_order": [
+  "item",
   "severity",
   "code",
   "message",
-  "acknowledged"
+  "acknowledged",
+  "row_ref"
  ],
  "fields": [
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "in_list_view": 1,
+   "columns": 2,
+   "read_only": 1
+  },
   {
    "fieldname": "severity",
    "fieldtype": "Select",
@@ -38,7 +49,7 @@
    "fieldtype": "Small Text",
    "label": "Message",
    "in_list_view": 1,
-   "columns": 7,
+   "columns": 6,
    "read_only": 1
   },
   {
@@ -47,6 +58,13 @@
    "label": "OK'd",
    "in_list_view": 1,
    "columns": 1
+  },
+  {
+   "fieldname": "row_ref",
+   "fieldtype": "Data",
+   "label": "Row",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 0,
