@@ -15,19 +15,18 @@ CUSTOM_FIELDS = {
 			no_copy=1, translatable=0),
 	],
 	"Item": [
+		dict(fieldname="is_print_item", label="Print Item", fieldtype="Check", insert_after="item_group",
+			read_only=1, hidden=1, no_copy=0, description="Set automatically from the Item Group (Print and its sub-groups)."),
 		dict(fieldname="artwork_section", label="Artwork / Print Spec", fieldtype="Section Break", insert_after="description",
-			collapsible=1, description="Print parts (Item Group: Print) – used when this item appears on an Artwork Proof."),
+			collapsible=0, depends_on="eval:doc.is_print_item",
+			description="Print parts only. Used when this item appears on an Artwork Proof."),
+		dict(fieldname="artwork_template", label="Print Template", fieldtype="Link",
+			options="Artwork Supplier Template", insert_after="artwork_section",
+			description="e.g. Takt – 12\" Outer Sleeve – 3mm Spine. Sets the supplier, artwork template and packing component."),
 		dict(fieldname="artwork_supplier", label="Print Supplier", fieldtype="Link", options="Supplier",
-			insert_after="artwork_section"),
-		dict(fieldname="artwork_product_size", label="Product Size", fieldtype="Link", options="Artwork Product Size",
-			insert_after="artwork_supplier"),
-		dict(fieldname="artwork_print_type", label="Print Type", fieldtype="Link", options="Artwork Print Type",
-			insert_after="artwork_product_size"),
-		dict(fieldname="artwork_template", label="Matched Supplier Template", fieldtype="Link",
-			options="Artwork Supplier Template", insert_after="artwork_print_type", read_only=1, no_copy=1,
-			description="Picked automatically from Supplier + Product Size + Print Type."),
+			insert_after="artwork_template", read_only=1, fetch_from="artwork_template.supplier"),
 		dict(fieldname="artwork_finish", label="Finish", fieldtype="Link", options="Artwork Finish",
-			insert_after="artwork_template", description="Gloss / Matt → ISO Coated v2 300%; Reverse Board / Uncoated → Euroscale Uncoated v2"),
+			insert_after="artwork_supplier", description="Gloss / Matt → ISO Coated v2 300%; Reverse Board / Uncoated → Euroscale Uncoated v2"),
 		dict(fieldname="artwork_outline_fonts", label="Convert Fonts to Outlines", fieldtype="Check", default="1",
 			insert_after="artwork_finish"),
 		dict(fieldname="artwork_cb", fieldtype="Column Break", insert_after="artwork_outline_fonts"),
@@ -43,18 +42,19 @@ CUSTOM_FIELDS = {
 }
 
 PRODUCT_SIZES = ['7"', '10"', '12"']
-PRINT_TYPES = [
-	("Outer Sleeve – Spineless", 1),
-	("Outer Sleeve – 3mm Spine", 0),
-	("Outer Sleeve – 5mm Spine", 0),
-	("Gatefold – Outer", 0),
-	("Gatefold – Inner", 1),
-	("Printed Inner Sleeve", 1),
-	("Centre Label", 1),
-	("Sticker", 1),
-	("Insert", 1),
-	("Poster", 1),
-	("Obi Strip", 1),
+PRINT_TYPES = [  # (name, no spine, packing component used by milomrp's packing-time maths)
+	("Outer Sleeve – Spineless", 1, "Outer Sleeve"),
+	("Outer Sleeve – 3mm Spine", 0, "Outer Sleeve"),
+	("Outer Sleeve – 5mm Spine", 0, "Outer Sleeve"),
+	("Gatefold – Outer", 0, "Outer Sleeve"),
+	("Gatefold – Inner", 1, ""),
+	("Printed Inner Sleeve", 1, "Inner Sleeve"),
+	("Centre Label", 1, ""),
+	("Sticker", 1, "Sticker"),
+	("Sticker – Difficult", 1, "Difficult Sticker"),
+	("Insert", 1, "Insert"),
+	("Poster", 1, "Insert"),
+	("Obi Strip", 1, "Insert"),
 ]
 
 PROFILES = [
@@ -90,6 +90,7 @@ def after_install():
 
 def after_migrate():
 	ensure_roles()
+	hide_packing_component_on_print_items()
 	ensure_print_group()
 	seed_settings()  # fills only settings that have never been set (e.g. ones added in an update)
 	create_custom_fields(CUSTOM_FIELDS, update=True)
@@ -105,10 +106,12 @@ def seed_sizes_and_types():
 	for size in PRODUCT_SIZES:
 		if not frappe.db.exists("Artwork Product Size", size):
 			frappe.get_doc({"doctype": "Artwork Product Size", "size_name": size}).insert(ignore_permissions=True)
-	for name, no_spine in PRINT_TYPES:
+	for name, no_spine, packing in PRINT_TYPES:
 		if not frappe.db.exists("Artwork Print Type", name):
-			frappe.get_doc({"doctype": "Artwork Print Type", "print_type_name": name, "no_spine": no_spine}).insert(
-				ignore_permissions=True)
+			frappe.get_doc({"doctype": "Artwork Print Type", "print_type_name": name, "no_spine": no_spine,
+				"packing_component": packing}).insert(ignore_permissions=True)
+		elif packing and not frappe.db.get_value("Artwork Print Type", name, "packing_component"):
+			frappe.db.set_value("Artwork Print Type", name, "packing_component", packing)
 
 
 def seed_masters():
@@ -148,3 +151,13 @@ def ensure_print_group():
 	# Not a group node: ERPNext's Item form only lets you pick non-group item groups.
 	frappe.get_doc({"doctype": "Item Group", "item_group_name": "Print", "parent_item_group": parent,
 		"is_group": 0}).insert(ignore_permissions=True)
+
+
+def hide_packing_component_on_print_items():
+	"""milomrp's Item.packing_component: hidden on print items (set from their Print Template instead)."""
+	if not frappe.get_meta("Item").has_field("packing_component"):
+		return
+	from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+	make_property_setter("Item", "packing_component", "depends_on", "eval:!doc.is_print_item", "Code",
+		validate_fields_for_doctype=False)

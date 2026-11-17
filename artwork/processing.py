@@ -66,28 +66,17 @@ def is_print_item(item: str) -> bool:
 	return bool(groups) and frappe.db.get_value("Item", item, "item_group") in groups
 
 
-def resolve_template(supplier, product_size, print_type) -> str | None:
-	"""The enabled Supplier Template for this supplier + product size + print type."""
-	if not (supplier and product_size and print_type):
-		return None
-	return frappe.db.get_value("Artwork Supplier Template", {"supplier": supplier, "product_size": product_size,
-		"print_type": print_type, "enabled": 1}, "name")
-
-
 def item_template(item_doc) -> str | None:
-	return resolve_template(item_doc.get("artwork_supplier"), item_doc.get("artwork_product_size"),
-		item_doc.get("artwork_print_type"))
+	return item_doc.get("artwork_template")
 
 
 def spec_problems(item_doc) -> list[str]:
 	out = []
-	missing = [label for field, label in (("artwork_supplier", _("Supplier")), ("artwork_product_size", _("Product Size")),
-		("artwork_print_type", _("Print Type"))) if not item_doc.get(field)]
-	if missing:
-		out.append(_("no {0}").format(", ".join(missing)))
-	elif not item_template(item_doc):
-		out.append(_("no Supplier Template exists for {0} · {1} · {2} – create one").format(
-			item_doc.artwork_supplier, item_doc.artwork_product_size, item_doc.artwork_print_type))
+	tpl = item_template(item_doc)
+	if not tpl:
+		out.append(_("no Print Template"))
+	elif not frappe.db.get_value("Artwork Supplier Template", tpl, "enabled"):
+		out.append(_("Print Template {0} is disabled").format(tpl))
 	if not item_doc.get("artwork_finish"):
 		out.append(_("no Finish"))
 	else:

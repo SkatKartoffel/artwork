@@ -29,7 +29,7 @@ override_doctype_dashboards = {
 }
 
 doc_events = {
-	"Item": {"validate": "artwork.item_hooks.set_artwork_template"},
+	"Item": {"validate": "artwork.item_hooks.item_validate"},
 	"Purchase Order": {
 		"after_insert": "artwork.artwork.doctype.artwork_proof.artwork_proof.purchase_order_after_insert",
 	},

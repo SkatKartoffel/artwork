@@ -1,8 +1,8 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2026-11-17 16:45:00.000000",
- "modified": "2026-11-17 16:45:00.000000",
+ "creation": "2026-11-17 17:00:00.000000",
+ "modified": "2026-11-17 17:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "module": "Artwork",
@@ -14,6 +14,7 @@
  "field_order": [
   "print_type_name",
   "no_spine",
+  "packing_component",
   "description"
  ],
  "fields": [
@@ -32,6 +33,14 @@
    "default": "0",
    "in_list_view": 1,
    "description": "Spineless sleeves, labels, stickers, inserts: artwork is centred on the trim instead of a spine."
+  },
+  {
+   "fieldname": "packing_component",
+   "fieldtype": "Select",
+   "label": "Packing Component",
+   "options": "\nDisc\nInner Sleeve\nOuter Sleeve\nInsert\nShrink Film\nPolybag\nSticker\nDifficult Sticker",
+   "in_list_view": 1,
+   "description": "What this part counts as for packing time (milomrp). Leave blank if it doesn't affect packing, e.g. centre labels."
   },
   {
    "fieldname": "description",

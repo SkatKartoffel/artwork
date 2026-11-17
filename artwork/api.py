@@ -186,3 +186,18 @@ def print_item_query(doctype, txt, searchfield, start, page_len, filters):
 		or_filters={"name": ["like", f"%{txt}%"], "item_name": ["like", f"%{txt}%"]},
 		fields=["name", "item_name", "item_group"], start=start, page_length=page_len, order_by="name asc",
 		as_list=True)
+
+
+@frappe.whitelist()
+def is_print_group(item_group: str) -> bool:
+	from artwork.processing import print_groups
+
+	return item_group in print_groups()
+
+
+@frappe.whitelist()
+def template_summary(template: str):
+	frappe.has_permission("Artwork Supplier Template", "read", throw=True)
+	t = frappe.db.get_value("Artwork Supplier Template", template,
+		["supplier", "product_size", "print_type", "packing_component", "no_spine"], as_dict=True) or {}
+	return t

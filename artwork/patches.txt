@@ -8,3 +8,4 @@ artwork.patches.set_print_item_defaults
 artwork.patches.reload_artwork_workspace
 artwork.patches.print_group_selectable
 artwork.patches.template_lookup_fields
+artwork.patches.print_template_on_item
