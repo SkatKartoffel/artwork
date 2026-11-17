@@ -106,5 +106,42 @@ class TestEngine(unittest.TestCase):
             self.assertTrue(os.path.getsize(self.result[k]) > 1000, k)
 
 
+class TestSpineless(unittest.TestCase):
+    """12" spineless flat: centre fold + glue-flap lines must NOT be taken for a spine."""
+
+    def test_no_spine_centres_on_trim(self):
+        import pymupdf
+
+        tmp = tempfile.mkdtemp()
+        MM = 72 / 25.4
+        tpl = os.path.join(tmp, "spineless.pdf")
+        d = pymupdf.open()
+        p = d.new_page(width=648 * MM, height=334 * MM)
+        x0, y0 = 10 * MM, 10 * MM
+        p.draw_rect(pymupdf.Rect(x0, y0, x0 + 628 * MM, y0 + 314 * MM), color=(1, 0, 1), width=0.5)
+        for x in (307, 314, 321):  # glue flap, centre fold, glue flap
+            p.draw_line((x0 + x * MM, y0), (x0 + x * MM, y0 + 314 * MM), color=(1, 0, 1), width=0.5)
+        d.save(tpl)
+        art = os.path.join(tmp, "art.pdf")
+        d = pymupdf.open()
+        p = d.new_page(width=634 * MM, height=320 * MM)  # trim + 3mm bleed, centred
+        p.draw_rect(p.rect, color=None, fill=(0.2, 0.3, 0.8))
+        d.save(art)
+        r = process_component({
+            "art_path": art, "work_dir": os.path.join(tmp, "out"), "out_basename": "SL",
+            "template": {"path": tpl, "no_spine": True, "trim_width_mm": 628, "trim_height_mm": 314},
+            "colour": {"profile_path": _stand_in_icc(), "identifier": "test", "tac_limit": 300},
+            "upgrades": [], "options": {},
+        })
+        info = r["info"]
+        self.assertIn("no spine", info["template"]["spine_source"])
+        self.assertEqual(info["template"]["spine_width_mm"], 0)
+        self.assertAlmostEqual(info["template"]["spine_centre_mm"], 324.0, places=1)  # page centre = trim centre
+        self.assertAlmostEqual(info["alignment"]["offset_x_mm"], 7.0, places=1)
+        codes = {w["code"] for w in r["warnings"]}
+        self.assertNotIn("BLEED", codes)
+        self.assertNotIn("TEXT_CROSSES_FOLD", codes)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -1,8 +1,8 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2026-11-17 12:00:00.000000",
- "modified": "2026-11-17 16:00:00.000000",
+ "creation": "2026-11-17 16:30:00.000000",
+ "modified": "2026-11-17 16:30:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "module": "Artwork",
@@ -14,7 +14,8 @@
  "field_order": [
   "template_name",
   "supplier",
-  "component_type",
+  "product_size",
+  "print_type",
   "enabled",
   "cb1",
   "template_file",
@@ -26,6 +27,7 @@
   "bleed_mm",
   "safe_margin_mm",
   "cb2",
+  "no_spine",
   "spine_width_mm",
   "spine_centre_mm",
   "cb3",
@@ -55,10 +57,20 @@
    "in_standard_filter": 1
   },
   {
-   "fieldname": "component_type",
-   "fieldtype": "Select",
-   "label": "Component Type",
-   "options": "\nSleeve / Jacket\nWide-Spine Jacket\nGatefold Outer\nGatefold Inner\nPrinted Inner Sleeve\nCentre Label A\nCentre Label B\nSticker\nHype Sticker\nInsert\nPoster\nObi Strip\nBox / Slipcase\nDownload Card\nOther",
+   "fieldname": "product_size",
+   "fieldtype": "Link",
+   "label": "Product Size",
+   "options": "Artwork Product Size",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "print_type",
+   "fieldtype": "Link",
+   "label": "Print Type",
+   "options": "Artwork Print Type",
+   "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1
   },
@@ -125,15 +137,24 @@
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "no_spine",
+   "fieldtype": "Check",
+   "label": "No Spine",
+   "fetch_from": "print_type.no_spine",
+   "read_only": 1,
+   "description": "Set by the Print Type: artwork is centred on the trim instead of a spine."
+  },
+  {
    "fieldname": "spine_width_mm",
    "fieldtype": "Float",
    "label": "Spine Width (mm)",
-   "description": "0 for products without a spine (labels, stickers)."
+   "depends_on": "eval:!doc.no_spine"
   },
   {
    "fieldname": "spine_centre_mm",
    "fieldtype": "Float",
    "label": "Spine Centre Override (mm)",
+   "depends_on": "eval:!doc.no_spine",
    "description": "Measured from the left edge of the template page."
   },
   {
@@ -222,5 +243,5 @@
  "quick_entry": 0,
  "autoname": "field:template_name",
  "naming_rule": "By fieldname",
- "search_fields": "supplier,component_type"
+ "search_fields": "supplier,product_size,print_type"
 }

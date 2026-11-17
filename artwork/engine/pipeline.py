@@ -50,9 +50,15 @@ def process_component(job: dict) -> dict:
     # ------------------------------------------------------------ template
     tcfg = job["template"]
     tgeo = normalise_page(tcfg["path"], int(tcfg.get("page") or 1) - 1, W("tpl_norm.pdf"))
+    no_spine = bool(tcfg.get("no_spine"))
     hint = geometry.box_centre(tgeo["trim"])[0] if tgeo["has_trim"] else tgeo["width"] / 2
-    spine = geometry.find_spine(W("tpl_norm.pdf"), hint, tcfg.get("spine_width_mm"))
+    spine = None if no_spine else geometry.find_spine(W("tpl_norm.pdf"), hint, tcfg.get("spine_width_mm"))
+    if no_spine:
+        tcfg = {**tcfg, "spine_centre_mm": None, "spine_width_mm": None}
     tpl = geometry.resolve_template_geometry(tgeo, tcfg, spine)
+    if no_spine:
+        tpl["spine_width"] = 0
+        tpl["spine_source"] = "no spine – centred on the trim"
     rep.info["template"] = {
         "page_mm": [round(mm(tpl["width"]), 2), round(mm(tpl["height"]), 2)],
         "trim_mm": [round(mm(tpl["trim"][2] - tpl["trim"][0]), 2), round(mm(tpl["trim"][3] - tpl["trim"][1]), 2)],
@@ -127,7 +133,7 @@ def process_component(job: dict) -> dict:
     art_cx, art_cy = geometry.box_centre(a_trim)
     method = f"artwork trim centre ({trim_src})"
     art_spine = None
-    if die_spots and opt.get("auto_detect_art_spine", True):
+    if die_spots and opt.get("auto_detect_art_spine", True) and not no_spine:
         exp = mm(tpl["spine_width"]) if tpl["spine_width"] else None
         art_spine = geometry.find_spine(W("art_die.pdf"), art_cx, exp)
         if art_spine:

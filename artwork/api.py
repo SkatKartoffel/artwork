@@ -129,8 +129,8 @@ def portal_file(proof: str, key: str, kind: str, row: str | None = None):
 		elif kind == "proof":
 			url = r.proof_file
 		elif kind == "template":
-			tpl = frappe.db.get_value("Item", r.item, "artwork_template")
-			url = frappe.db.get_value("Artwork Supplier Template", tpl, "template_file") if tpl else None
+			url = frappe.db.get_value("Artwork Supplier Template", r.supplier_template, "template_file") \
+				if r.supplier_template else None
 	path = file_path(url)
 	if not path or not os.path.exists(path):
 		raise frappe.DoesNotExistError(_("File not available"))
@@ -148,14 +148,14 @@ def portal_context(proof: str, key: str):
 	doc = get_portal_proof(proof, key)
 	rows = []
 	for r in doc.items:
-		tpl_name = frappe.db.get_value("Item", r.item, "artwork_template")
-		tpl = frappe.get_cached_doc("Artwork Supplier Template", tpl_name) if tpl_name else None
+		tpl = frappe.get_cached_doc("Artwork Supplier Template", r.supplier_template) if r.supplier_template else None
 		rows.append({
 			"row": r.name,
 			"title": r.item_name or r.item,
 			"item": r.item,
 			"finish": r.finish or "",
 			"template": tpl.template_name if tpl else "",
+			"product": f"{tpl.product_size} {tpl.print_type}" if tpl else "",
 			"spec": (f"Trim {tpl.trim_width_mm or '?'} × {tpl.trim_height_mm or '?'} mm · bleed {tpl.bleed_mm or 3} mm"
 				+ (f" · spine {tpl.spine_width_mm} mm" if tpl.spine_width_mm else "")) if tpl else "",
 			"has_template": bool(tpl and tpl.template_file),

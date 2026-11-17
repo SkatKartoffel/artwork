@@ -11,6 +11,7 @@ from artwork.processing import (
 	enqueue_proof,
 	is_print_item,
 	print_groups,
+	resolve_template,
 	row_signature,
 	settings,
 )
@@ -68,8 +69,10 @@ class ArtworkProof(Document):
 			if groups and not is_print_item(row.item):
 				frappe.throw(_("Row {0}: {1} is not in the {2} item group.").format(
 					row.idx, row.item, settings().print_item_group or "Print"))
-			spec = frappe.db.get_value("Item", row.item, ["artwork_template", "artwork_finish"], as_dict=True) or {}
-			row.supplier_template = spec.get("artwork_template")
+			spec = frappe.db.get_value("Item", row.item, ["artwork_supplier", "artwork_product_size",
+				"artwork_print_type", "artwork_finish"], as_dict=True) or {}
+			row.supplier_template = resolve_template(spec.get("artwork_supplier"), spec.get("artwork_product_size"),
+				spec.get("artwork_print_type"))
 			row.finish = spec.get("artwork_finish")
 
 	def sync_masks(self):

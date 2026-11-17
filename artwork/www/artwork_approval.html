@@ -26,7 +26,7 @@
 		{% for c in components %}
 		<div class="aw-card">
 			<h3>{{ c.title }}</h3>
-			<div class="aw-muted">{{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
+			<div class="aw-muted">{{ c.product }} · {{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
 			{% if c.has_preview %}
 				<a href="{{ file_base }}&kind=proof&row={{ c.row }}" target="_blank">
 					<img class="aw-prev" src="{{ file_base }}&kind=preview&row={{ c.row }}" alt="{{ c.title }}"></a>

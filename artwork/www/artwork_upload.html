@@ -17,7 +17,7 @@
 		{% for c in components %}
 		<div class="aw-card" data-row="{{ c.row }}">
 			<h3>{{ c.title }} {% if c.has_artwork %}<span class="aw-pill ok">artwork received</span>{% endif %}</h3>
-			<div class="aw-muted">{{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
+			<div class="aw-muted">{{ c.product }} · {{ c.item }} · {{ c.finish }} · {{ c.spec }}</div>
 			{% if c.upgrades %}<div class="aw-muted">Special finishes: {{ c.upgrades | join(", ") }}</div>{% endif %}
 			{% if c.has_template %}
 			<div class="aw-row">

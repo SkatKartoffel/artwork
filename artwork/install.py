@@ -13,8 +13,15 @@ CUSTOM_FIELDS = {
 	"Item": [
 		dict(fieldname="artwork_section", label="Artwork / Print Spec", fieldtype="Section Break", insert_after="description",
 			collapsible=1, description="Print parts (Item Group: Print) – used when this item appears on an Artwork Proof."),
-		dict(fieldname="artwork_template", label="Supplier Template", fieldtype="Link",
-			options="Artwork Supplier Template", insert_after="artwork_section"),
+		dict(fieldname="artwork_supplier", label="Print Supplier", fieldtype="Link", options="Supplier",
+			insert_after="artwork_section"),
+		dict(fieldname="artwork_product_size", label="Product Size", fieldtype="Link", options="Artwork Product Size",
+			insert_after="artwork_supplier"),
+		dict(fieldname="artwork_print_type", label="Print Type", fieldtype="Link", options="Artwork Print Type",
+			insert_after="artwork_product_size"),
+		dict(fieldname="artwork_template", label="Matched Supplier Template", fieldtype="Link",
+			options="Artwork Supplier Template", insert_after="artwork_print_type", read_only=1, no_copy=1,
+			description="Picked automatically from Supplier + Product Size + Print Type."),
 		dict(fieldname="artwork_finish", label="Finish", fieldtype="Link", options="Artwork Finish",
 			insert_after="artwork_template", description="Gloss / Matt → ISO Coated v2 300%; Reverse Board / Uncoated → Euroscale Uncoated v2"),
 		dict(fieldname="artwork_outline_fonts", label="Convert Fonts to Outlines", fieldtype="Check", default="1",
@@ -30,6 +37,21 @@ CUSTOM_FIELDS = {
 			options="Artwork Item Upgrade", insert_after="artwork_approved_on"),
 	],
 }
+
+PRODUCT_SIZES = ['7"', '10"', '12"']
+PRINT_TYPES = [
+	("Outer Sleeve – Spineless", 1),
+	("Outer Sleeve – 3mm Spine", 0),
+	("Outer Sleeve – 5mm Spine", 0),
+	("Gatefold – Outer", 0),
+	("Gatefold – Inner", 1),
+	("Printed Inner Sleeve", 1),
+	("Centre Label", 1),
+	("Sticker", 1),
+	("Insert", 1),
+	("Poster", 1),
+	("Obi Strip", 1),
+]
 
 PROFILES = [
 	{"profile_name": "ISO Coated v2 300% (ECI)", "max_ink": 300, "output_condition": "ISO Coated v2 300% (ECI)",
@@ -75,7 +97,18 @@ def ensure_roles():
 			frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(ignore_permissions=True)
 
 
+def seed_sizes_and_types():
+	for size in PRODUCT_SIZES:
+		if not frappe.db.exists("Artwork Product Size", size):
+			frappe.get_doc({"doctype": "Artwork Product Size", "size_name": size}).insert(ignore_permissions=True)
+	for name, no_spine in PRINT_TYPES:
+		if not frappe.db.exists("Artwork Print Type", name):
+			frappe.get_doc({"doctype": "Artwork Print Type", "print_type_name": name, "no_spine": no_spine}).insert(
+				ignore_permissions=True)
+
+
 def seed_masters():
+	seed_sizes_and_types()
 	for p in PROFILES:
 		if not frappe.db.exists("Artwork Colour Profile", p["profile_name"]):
 			doc = frappe.get_doc({"doctype": "Artwork Colour Profile", **p})

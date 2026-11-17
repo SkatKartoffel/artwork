@@ -11,8 +11,9 @@ frappe.ui.form.on("Artwork Supplier Template", {
 						indicator: d.spine_centre ? "green" : "orange",
 						message: `${__("Page")}: ${d.page[0]} × ${d.page[1]} mm<br>
 							${__("Trim")}: ${d.trim[0] || "?"} × ${d.trim[1] || "?"} mm<br>
-							${__("Spine")}: ${d.spine_centre ? `${__("centre")} ${d.spine_centre} mm, ${__("width")} ${d.spine_width} mm`
-								: __("no fold lines found – enter Spine Centre Override if this product has a spine")}`,
+							${__("Spine")}: ${frm.doc.no_spine ? __("none (No Spine ticked) – artwork is centred on the trim")
+								: d.spine_centre ? `${__("centre")} ${d.spine_centre} mm, ${__("width")} ${d.spine_width} mm`
+								: __("no fold lines found – tick No Spine, or enter Spine Centre Override")}`,
 					});
 					frm.reload_doc();
 				}));

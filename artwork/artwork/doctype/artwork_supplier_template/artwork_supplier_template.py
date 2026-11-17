@@ -14,6 +14,15 @@ class ArtworkSupplierTemplate(Document):
 	def validate(self):
 		if self.template_file and not self.template_file.lower().endswith((".pdf", ".ai")):
 			frappe.throw(_("The supplier template must be a PDF (or PDF-compatible .ai) file."))
+		if self.print_type:
+			self.no_spine = frappe.db.get_value("Artwork Print Type", self.print_type, "no_spine") or 0
+		if self.enabled and self.supplier and self.product_size and self.print_type:
+			clash = frappe.db.get_value("Artwork Supplier Template", {"supplier": self.supplier,
+				"product_size": self.product_size, "print_type": self.print_type, "enabled": 1,
+				"name": ["!=", self.name]}, "name")
+			if clash:
+				frappe.throw(_("{0} is already the enabled template for {1} · {2} · {3}. Disable one of them.").format(
+					clash, self.supplier, self.product_size, self.print_type))
 		if self.has_value_changed("template_file") or self.has_value_changed("template_page"):
 			self.flags.redetect = True
 
@@ -39,7 +48,7 @@ class ArtworkSupplierTemplate(Document):
 			norm = os.path.join(tmp, "t.pdf")
 			geo = normalise_page(path, (self.template_page or 1) - 1, norm)
 			hint = geometry.box_centre(geo["trim"])[0] if geo["has_trim"] else geo["width"] / 2
-			spine = geometry.find_spine(norm, hint, flt(self.spine_width_mm) or None)
+			spine = None if self.no_spine else geometry.find_spine(norm, hint, flt(self.spine_width_mm) or None)
 			self.page_width_mm = round(mm(geo["width"]), 2)
 			self.page_height_mm = round(mm(geo["height"]), 2)
 			self.detected_spine_centre_mm = round(mm(spine["centre"]), 2) if spine else None
@@ -48,6 +57,9 @@ class ArtworkSupplierTemplate(Document):
 				t = geo["trim"]
 				self.trim_width_mm = round(mm(t[2] - t[0]), 2)
 				self.trim_height_mm = round(mm(t[3] - t[1]), 2)
+			if self.no_spine:
+				self.spine_width_mm = 0
+				self.spine_centre_mm = 0
 			if spine and not self.spine_width_mm:
 				self.spine_width_mm = self.detected_spine_width_mm
 			import pymupdf

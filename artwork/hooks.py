@@ -28,6 +28,10 @@ override_doctype_dashboards = {
 	"Project": "artwork.dashboards.project_dashboard",
 }
 
+doc_events = {
+	"Item": {"validate": "artwork.item_hooks.set_artwork_template"},
+}
+
 # Other apps (e.g. milomrp) can react to customer decisions:
 #   artwork_on_approve = ["milomrp.hooks_artwork.on_approve"]            # fn(proof_doc)
 #   artwork_on_changes_requested = ["milomrp.hooks_artwork.on_changes"]  # fn(proof_doc)

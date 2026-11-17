@@ -1,8 +1,22 @@
 // Artwork app: print spec on the SKU (Item)
 frappe.ui.form.on("Item", {
 	setup(frm) {
-		frm.set_query("artwork_template", () => ({ filters: { enabled: 1 } }));
+		frm.set_query("artwork_supplier", () => ({ filters: { disabled: 0 } }));
 		frm.set_query("upgrade", "artwork_upgrades", () => ({ filters: { enabled: 1 } }));
+	},
+	artwork_supplier(frm) { frm.events.preview_template(frm); },
+	artwork_product_size(frm) { frm.events.preview_template(frm); },
+	artwork_print_type(frm) { frm.events.preview_template(frm); },
+	preview_template(frm) {
+		const d = frm.doc;
+		if (!(d.artwork_supplier && d.artwork_product_size && d.artwork_print_type)) return;
+		frappe.db.get_value("Artwork Supplier Template", { supplier: d.artwork_supplier,
+			product_size: d.artwork_product_size, print_type: d.artwork_print_type, enabled: 1 }, "name").then((r) => {
+			const name = r.message && r.message.name;
+			frm.set_value("artwork_template", name || null);
+			if (!name) frappe.show_alert({ message: __("No template yet for {0} · {1} · {2}",
+				[d.artwork_supplier, d.artwork_product_size, d.artwork_print_type]), indicator: "orange" });
+		});
 	},
 	refresh(frm) {
 		if (frm.is_new()) return;

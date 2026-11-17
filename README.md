@@ -53,7 +53,12 @@ Job Ticket (Project) ──► Artwork Proof ──► one row per print item (p
 ```
 
 * **One screen.** Everything happens on the **Artwork Proof**. Creating one for a Job Ticket automatically adds every print item on its Sales Order, including print parts inside the default BOMs of the ordered records (sleeves and labels usually sit in the BOM). You can also use *Actions → Get Print Items from Sales Order*, or add rows by hand; the item picker only shows Print items.
-* **Print spec lives on the Item.** Each print SKU has an *Artwork / Print Spec* section on the Item: Supplier Template, Finish, Convert Fonts to Outlines, and its Print Upgrades (Spot UV, foil… and how each is supplied). Set it once and represses reuse it automatically. A row whose Item has no spec shows **Needs Setup** with a message saying what's missing.
+* **Print spec lives on the Item.** Each print SKU has an *Artwork / Print Spec* section on the Item:
+  * **Print Supplier**, **Product Size** (7" / 10" / 12") and **Print Type** (Outer Sleeve – Spineless, Outer Sleeve – 3mm Spine, Centre Label…). The matching Supplier Template is **looked up automatically** from these three and shown as *Matched Supplier Template*.
+  * **Finish**, **Convert Fonts to Outlines**, and the **Print Upgrades** (Spot UV, foil… and how each is supplied).
+
+  Set it once and represses reuse it automatically. A row whose Item is incomplete, or has no template for its combination, shows **Needs Setup** with a message saying what's missing (e.g. *no Supplier Template exists for Takt · 7" · Centre Label*).
+* **Spine or no spine** is set on the **Print Type**. Spineless types (spineless sleeves, labels, stickers, inserts) centre the artwork on the trim; spine types align the artwork's spine to the template's.
 * **Finish masks.** If an upgrade is supplied as a *Separate file*, the proof adds a mask row for it automatically (staff or the customer upload the black-only file there).
 * Dropping artwork into a row (or changing its page, nudge or mask) saves the proof and queues just that row. Each row shows its preview, status, warnings and files under the table.
 * Preflight **Errors must be ticked "OK'd"** (or fixed) before a proof can be sent. This can be switched off in settings.
@@ -88,15 +93,15 @@ Python deps (`pikepdf`, `PyMuPDF`, `numpy`, `Pillow`) install automatically from
 1. **Artwork Colour Profile.** Attach the ICC files to the two seeded profiles:
    * `ISOcoated_v2_300_eci.icc` from eci.org (ECI offset profiles package).
    * `EuroscaleUncoated.icc` ships with Adobe Creative Cloud.
-2. **Artwork Supplier Template.** One per supplier × product, e.g. *Takt – 12" Wide Spine 5mm*:
+2. **Product Sizes and Print Types.** 7", 10", 12" and common print types are seeded. Add your own (e.g. *Gatefold – 7mm Spine*); tick **No Spine** on spineless types.
+3. **Artwork Supplier Template.** One per **Supplier × Product Size × Print Type** (only one can be enabled per combination), e.g. *Takt · 12" · Outer Sleeve – 3mm Spine*:
    * attach the supplier PDF and click **Detect Geometry**
    * check the trim size, bleed and spine width (set *Spine Centre Override* if detection misses)
-   * use spine width 0 for labels and stickers
-3. **Item Group "Print".** Created on install as a normal item group, so you can pick it on Items. If you want sub-groups (Print › Labels, Print › Sleeves), tick *Is Group* on Print, create the sub-groups, and put the SKUs in those; sub-groups count as print items too. You can use a different group in Artwork Settings.
-4. **Each print Item.** Fill in its *Artwork / Print Spec* section: template, finish and upgrades.
-5. **Artwork Print Upgrade.** Six are seeded. Edit the aliases to match how your customers name spots.
-6. **Artwork Settings.** Set the limits, template spot name, proof logo, header colour and email texts.
-7. **Roles.** Give staff the **Artwork User** role; template, profile and settings admins need **Artwork Manager**.
+4. **Item Group "Print".** Created on install as a normal item group, so you can pick it on Items. If you want sub-groups (Print › Labels, Print › Sleeves), tick *Is Group* on Print, create the sub-groups, and put the SKUs in those; sub-groups count as print items too. You can use a different group in Artwork Settings.
+5. **Each print Item.** Fill in its *Artwork / Print Spec* section: supplier, size, print type, finish and upgrades.
+6. **Artwork Print Upgrade.** Six are seeded. Edit the aliases to match how your customers name spots.
+7. **Artwork Settings.** Set the limits, template spot name, proof logo, header colour and email texts.
+8. **Roles.** Give staff the **Artwork User** role; template, profile and settings admins need **Artwork Manager**.
 
 ## Code layout
 
