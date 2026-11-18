@@ -73,7 +73,7 @@ frappe.ui.form.on("Artwork Proof", {
 			process: (m) => __("{0} item(s) queued for processing", [m]),
 		}[method];
 		if (msg) frappe.show_alert({ message: msg(r.message), indicator: "blue" });
-		frm.reload_doc();
+		await frm.reload_doc();
 	},
 
 	// One Purchase Order per print supplier, opened unsaved so staff add quantities and prices.
@@ -118,9 +118,12 @@ frappe.ui.form.on("Artwork Proof", {
 	},
 
 	copy_link(frm, page) {
-		frm.call("copy_customer_link", { page }).then((r) => {
+		// called by name, not with the form's copy of the record, so it is safe while the form is reloading
+		frappe.call("run_doc_method", {
+			dt: frm.doctype, dn: frm.docname, method: "copy_customer_link", args: { page },
+		}).then((r) => {
 			frappe.utils.copy_to_clipboard(r.message);
-			frm.reload_doc();
+			if (!frm.is_dirty()) frm.reload_doc();
 		});
 	},
 
