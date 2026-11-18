@@ -131,3 +131,10 @@ artwork/tests/         fixtures + engine test
 ```
 
 Engine test (no Frappe needed): `python -m artwork.tests.test_engine`.
+
+## Spellcheck (optional)
+
+Tick **Spellcheck artwork (English / German)** on an Artwork Proof and process. Live text is read exactly; outlined
+text and text inside images is read by OCR. Findings are warnings (`SPELLING`, `SPELLING_OCR`) and never block a proof.
+Text that does not look like English or German is skipped. Needs `pyspellchecker` (installed with the app) and, for
+outlined/image text, Tesseract: `sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-deu`.

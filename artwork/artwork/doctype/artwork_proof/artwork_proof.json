@@ -28,6 +28,8 @@
   "items",
   "masks",
   "items_html",
+  "spellcheck",
+  "spellcheck_ignore",
   "sb_warn",
   "warnings",
   "sb_approval",
@@ -155,6 +157,20 @@
    "fieldname": "items_html",
    "fieldtype": "HTML",
    "label": "Proofs"
+  },
+  {
+   "fieldname": "spellcheck",
+   "fieldtype": "Check",
+   "label": "Spellcheck artwork (English / German)",
+   "default": "0",
+   "description": "Reads all text in the uploaded artwork \u2013 live text, and outlined or image text by OCR \u2013 and lists possible spelling mistakes as warnings. Other languages are skipped. Tick, then Process All Artwork."
+  },
+  {
+   "fieldname": "spellcheck_ignore",
+   "fieldtype": "Small Text",
+   "label": "Words to ignore",
+   "depends_on": "spellcheck",
+   "description": "Artist names, titles and other words that are spelt as intended. The proof title, job name and customer name are ignored automatically."
   },
   {
    "fieldname": "sb_warn",

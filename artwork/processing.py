@@ -288,6 +288,9 @@ def build_job(proof, row, item, s, work) -> dict:
 			"min_line_pt": flt(s.min_line_pt) or 0.25,
 			"preview_dpi": cint(s.preview_dpi) or 110,
 			"gs": s.ghostscript_path or None,
+			"spellcheck": cint(proof.get("spellcheck")),
+			"spellcheck_ignore": [proof.get("spellcheck_ignore"), proof.title, proof.project_name, proof.customer,
+				item.item_name, frappe.db.get_value("Customer", proof.customer, "customer_name") if proof.customer else None],
 		},
 		"proof": {
 			"details": details,

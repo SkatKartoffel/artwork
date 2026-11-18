@@ -174,6 +174,13 @@ def process_component(job: dict) -> dict:
         run_mode(W("art_norm.pdf"), W("art_clean.pdf"), "remove", targets=strip)
     else:
         shutil.copy(W("art_norm.pdf"), W("art_clean.pdf"))
+    if opt.get("spellcheck"):
+        # on the artwork with the dieline removed and before fonts are outlined; never stops the proof
+        try:
+            from . import spellcheck
+            spellcheck.run(W("art_clean.pdf"), work, rep, opt.get("spellcheck_ignore") or ())
+        except Exception as e:  # noqa: BLE001
+            rep.note("SPELL_FAILED", f"Spellcheck could not be completed: {e}")
     col = job["colour"]
     limit = float(col.get("tac_limit") or 300)
     # Ghostscript: spots → CMYK alternates, fonts → outlines (colour values untouched)
