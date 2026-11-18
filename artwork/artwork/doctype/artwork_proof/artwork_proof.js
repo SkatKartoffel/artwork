@@ -101,7 +101,7 @@ frappe.ui.form.on("Artwork Proof", {
 					Object.keys(it).forEach((k) => { if (!skip.has(k) && it[k] !== null && it[k] !== undefined) row[k] = it[k]; });
 				});
 				frappe.set_route("Form", "Purchase Order", po.name);
-				frappe.show_alert({ message: __("Add quantities and prices, then save"), indicator: "blue" });
+				frappe.show_alert({ message: __("Check the quantities and save, then use Get Supplier Prices to fill in prices and set-ups"), indicator: "blue" });
 			});
 		};
 		const go = (s) => s.existing.length

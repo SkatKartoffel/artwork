@@ -341,7 +341,8 @@ class ArtworkProof(Document):
 
 	@frappe.whitelist()
 	def make_purchase_order(self, supplier):
-		"""An unsaved Purchase Order for this supplier's print items – staff add quantities and prices."""
+		"""An unsaved Purchase Order for this supplier's print items, with the Sales Order quantities.
+		Prices: staff type them in, or use Get Supplier Prices on the saved draft (Gizmos, from the supplier's price list)."""
 		frappe.has_permission("Purchase Order", "create", throw=True)
 		items = [r for r in self.items if print_supplier(frappe.get_cached_doc("Item", r.item)) == supplier]
 		if not items:
@@ -357,6 +358,10 @@ class ArtworkProof(Document):
 		po.artwork_proof = self.name
 		po.transaction_date = nowdate()
 		po.schedule_date = schedule
+		so_qty = {}
+		if self.sales_order:   # order what the customer ordered; staff can still change it
+			for d in frappe.get_all("Sales Order Item", filters={"parent": self.sales_order}, fields=["item_code", "qty"]):
+				so_qty[d.item_code] = so_qty.get(d.item_code, 0) + flt(d.qty)
 		for r in items:
 			it = frappe.db.get_value("Item", r.item, ["item_name", "description", "stock_uom"], as_dict=True) or {}
 			po.append("items", {
@@ -369,13 +374,13 @@ class ArtworkProof(Document):
 				"schedule_date": schedule,
 				"project": self.project,
 				"sales_order": self.sales_order,
-				"qty": 0,
+				"qty": so_qty.get(r.item, 0),
 				"rate": 0,
 			})
 		try:  # let ERPNext fill currency, price list, warehouse etc. where it can
 			po.set_missing_values()
 			for d in po.items:
-				d.qty = 0
+				d.qty = so_qty.get(d.item_code, 0)
 				d.rate = 0
 		except Exception:
 			frappe.clear_messages()
