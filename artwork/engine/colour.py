@@ -180,9 +180,13 @@ def convert_and_limit(src, dst, profile_path, tac_percent, intent=1):
     """RGB/Lab → profile CMYK (LittleCMS) and TAC capping, in one content-stream pass."""
     conv = ColourConverter(profile_path, intent)
     with pikepdf.open(src) as pdf:
-        stats = Walker(pdf, "tac", tac_limit=tac_percent / 100.0, converter=conv).run()
+        w = Walker(pdf, "tac", tac_limit=tac_percent / 100.0, converter=conv)
+        stats = w.run()
         pdf.save(dst)
-    return dict(stats)
+    out = dict(stats)
+    out["__max_tac__"] = round(w.max_tac * 100.0, 2)
+    out["__max_in__"] = round(w.max_in * 100.0, 2)        # highest total ink found before limiting      # highest total ink written, read from the file's own values
+    return out
 
 
 def residual_rgb(pdf_path) -> int:

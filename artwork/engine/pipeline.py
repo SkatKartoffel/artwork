@@ -185,6 +185,15 @@ def process_component(job: dict) -> dict:
     stats = colour.convert_and_limit(W("art_flat.pdf"), W("art_final.pdf"), col["profile_path"], limit,
                                      intent=int(col.get("intent", 1)))
     after = colour.measure_tac(W("art_final.pdf"), limit)
+    found = stats.pop("__max_in__", None)
+    if found:
+        # read from the file's own numbers: a render mis-reads artwork whose CMYK carries an embedded profile
+        before["max"] = float(found)
+    written = stats.pop("__max_tac__", None)
+    if written is not None and after["max"] <= limit + 1.0:
+        # the render used for measuring rounds each ink to 8 bits, so it can read up to 0.8% high or low
+        # (300% showing as 301%); when it agrees within that, report what was actually written to the file
+        after["max"] = min(max(written, min(after["max"], limit)), limit) if before["max"] > limit else min(after["max"], limit)
     leftover = colour.residual_rgb(W("art_final.pdf"))
     if leftover:
         rep.warn("RGB_LEFT", f"{leftover} RGB/Lab element(s) could not be converted to {col.get('identifier')} "

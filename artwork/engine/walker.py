@@ -297,6 +297,8 @@ class Walker:
         self.tac = tac_limit
         self.spot = make_spot_cs(pdf, spot_name, spot_alt) if spot_name else None
         self.stats = Counter()
+        self.max_tac = 0.0
+        self.max_in = 0.0
         self._forms = {}
         self._form_src = {}
         self._images = {}
@@ -305,6 +307,19 @@ class Walker:
         self._patterns = set()
         self._indexed = set()
         self.conv = converter if mode == "tac" else None
+
+    # ---- ink limit, keeping track of the highest total actually written -----------
+    def _cap(self, c, m, y, k):
+        self.max_in = max(self.max_in, c + m + y + k)
+        r = cap_tac(c, m, y, k, self.tac)
+        self.max_tac = max(self.max_tac, sum(r))
+        return r
+
+    def _quant(self, arr):
+        q = quantise_tac(arr, self.tac)
+        if q.size:
+            self.max_tac = max(self.max_tac, float(q.reshape(-1, q.shape[-1]).astype(np.int32).sum(-1).max()) / 255.0)
+        return q
 
     # ---- target tests ------------------------------------------------------
     def _is_target_info(self, info):
@@ -377,6 +392,13 @@ class Walker:
         out = []
         stack = []
         mode = self.mode
+        if mode == "tac":
+            try:
+                csd = res.get("/ColorSpace") if res is not None else None
+                if csd is not None and "/DefaultCMYK" in csd:
+                    del csd["/DefaultCMYK"]
+            except Exception:
+                pass
         for ins in instrs:
             if isinstance(ins, pikepdf.ContentStreamInlineImage):
                 out.extend(self._inline_image(ins, res, state))
@@ -428,13 +450,17 @@ class Walker:
                     out.append(ins); continue
                 if self.conv is not None and info[0] in ("rgb", "lab") and len(vals) == 3:
                     cs_obj = state.fill_cs if fill else state.stroke_cs
-                    cmyk = cap_tac(*self.conv.colour(info[0], vals, cs_obj), self.tac)
+                    cmyk = self._cap(*self.conv.colour(info[0], vals, cs_obj))
                     self.stats[f"{info[0].upper()} colours converted"] += 1
                     out.append(I([_num(v) for v in cmyk], op)); continue
                 if mode == "tac" and info[0] == "cmyk" and len(vals) == 4 and not any(isinstance(v, Name) for v in vals):
-                    capped = cap_tac(*vals, self.tac)
+                    capped = self._cap(*vals)
                     if capped != tuple(vals):
                         self.stats["vector colours capped"] += 1
+                    cs_now = state.fill_cs if fill else state.stroke_cs
+                    if isinstance(cs_now, Array):      # ICC-tagged CMYK: write plain CMYK so the numbers are what prints
+                        self.stats["ICC-tagged CMYK colours untagged"] += 1
+                        out.append(I([_num(v) for v in capped], "k" if fill else "K")); continue
                     out.append(I([_num(v) for v in capped], op)); continue
                 out.append(ins); continue
 
@@ -450,11 +476,11 @@ class Walker:
                 if mode == "spot":
                     out.extend(self._spot_set(res, fill, state)); continue
                 if self.conv is not None and op in ("rg", "RG"):
-                    cmyk = cap_tac(*self.conv.colour("rgb", vals), self.tac)
+                    cmyk = self._cap(*self.conv.colour("rgb", vals))
                     self.stats["RGB colours converted"] += 1
                     out.append(I([_num(v) for v in cmyk], "k" if fill else "K")); continue
                 if mode == "tac" and op in ("k", "K"):
-                    capped = cap_tac(*vals, self.tac)
+                    capped = self._cap(*vals)
                     if capped != tuple(vals):
                         self.stats["vector colours capped"] += 1
                     out.append(I([_num(v) for v in capped], op)); continue
@@ -574,6 +600,9 @@ class Walker:
         info = cs_info(cs)
         if info[0] == "cmyk":
             self._cap_function(sh.get("/Function"))
+            if isinstance(cs, Array):
+                sh["/ColorSpace"] = Name.DeviceCMYK
+                self.stats["ICC-tagged CMYK gradients untagged"] += 1
         elif info[0] in ("rgb", "lab") and self.conv is not None:
             self._convert_shading(sh, cs, info[0])
 
@@ -594,7 +623,7 @@ class Walker:
             cols = np.array([eval_fn(fn, t)[:3] for t in ts], dtype=np.float64)
             cmyk = self.conv.rgb_many(cols, cs) if family == "rgb" else self.conv.lab_many(cols)
             cmyk = cap_tac_array(cmyk, self.tac)
-            st = pikepdf.Stream(self.pdf, quantise_tac(cmyk, self.tac).tobytes())
+            st = pikepdf.Stream(self.pdf, self._quant(cmyk).tobytes())
             st.FunctionType = 0
             st.Domain = Array(dom)
             st.Range = Array([0, 1] * 4)
@@ -635,7 +664,7 @@ class Walker:
     def _fix_group(self, obj):
         try:
             g = obj.get("/Group")
-            if g is not None and "/CS" in g and cs_info(g.CS)[0] == "rgb":
+            if g is not None and "/CS" in g and (cs_info(g.CS)[0] == "rgb" or (cs_info(g.CS)[0] == "cmyk" and isinstance(g.CS, Array))):
                 g.CS = Name.DeviceCMYK
         except Exception:
             pass
@@ -661,7 +690,7 @@ class Walker:
                 cmyk = self.conv.lab_many(np.stack([arr[:, 0] / 2.55, arr[:, 1] - 128, arr[:, 2] - 128], -1))
             cmyk = cap_tac_array(cmyk, self.tac)
             cs[1] = Name.DeviceCMYK
-            cs[3] = pikepdf.String(quantise_tac(cmyk, self.tac).tobytes())
+            cs[3] = pikepdf.String(self._quant(cmyk).tobytes())
             self.stats["indexed palettes converted"] += 1
         except Exception as e:
             self.stats[f"indexed palette skipped ({type(e).__name__})"] += 1
@@ -679,7 +708,7 @@ class Walker:
                 for key in ("/C0", "/C1"):
                     if key in fn and len(fn[key]) == 4:
                         v = [float(x) for x in fn[key]]
-                        c = cap_tac(*v, self.tac)
+                        c = self._cap(*v)
                         if c != tuple(v):
                             fn[key] = Array([_num(x) for x in c])
                             self.stats["shading colours capped"] += 1
@@ -795,7 +824,8 @@ class Walker:
             if cs_info(cs)[0] not in ("rgb", "lab"):
                 return [ins]
             data = self.conv.image(iim.as_pil_image(), cs)
-            capped = quantise_tac(cap_tac_array(data / 255.0, self.tac), self.tac)
+            self.max_in = max(self.max_in, float(np.asarray(data, dtype=np.int32).sum(-1).max()) / 255.0)
+            capped = self._quant(cap_tac_array(data / 255.0, self.tac))
             import zlib
             st = pikepdf.Stream(self.pdf, zlib.compress(capped.tobytes(), 6))
             st.Filter = Name.FlateDecode
@@ -865,7 +895,8 @@ class Walker:
             if self.conv is not None and info[0] in ("rgb", "lab") and not xo.get("/ImageMask", False):
                 pil = pikepdf.PdfImage(xo).as_pil_image()
                 data = self.conv.image(pil, cs)
-                capped = quantise_tac(cap_tac_array(data / 255.0, self.tac), self.tac)
+                self.max_in = max(self.max_in, float(np.asarray(data, dtype=np.int32).sum(-1).max()) / 255.0)
+                capped = self._quant(cap_tac_array(data / 255.0, self.tac))
                 import zlib
                 xo.write(zlib.compress(capped.tobytes(), 6), filter=Name.FlateDecode)
                 xo.ColorSpace = Name.DeviceCMYK
@@ -883,9 +914,15 @@ class Walker:
                 arr = np.frombuffer(raw, dtype=np.uint8)[: (len(raw) // 4) * 4].reshape(-1, 4) / 255.0
                 capped = cap_tac_array(arr, self.tac)
                 if (np.round(arr * 255).sum(-1) > math.floor(self.tac * 255 + 1e-6)).any():
-                    cs[3] = pikepdf.String(quantise_tac(capped, self.tac).tobytes())
+                    cs[3] = pikepdf.String(self._quant(capped).tobytes())
                     self.stats["indexed palettes capped"] += 1
                 return
+            if info[0] == "cmyk" and isinstance(cs, Array) and not xo.get("/ImageMask", False):
+                # ICC-tagged CMYK image: untag it, otherwise viewers and RIPs convert it again and the ink total moves
+                xo.ColorSpace = Name.DeviceCMYK
+                if "/Intent" in xo:
+                    del xo["/Intent"]
+                self.stats["ICC-tagged CMYK images untagged"] += 1
             if info[0] != "cmyk" or int(xo.get("/BitsPerComponent", 8)) != 8:
                 return
             w, h = int(xo.Width), int(xo.Height)
@@ -902,9 +939,11 @@ class Walker:
                 if data.shape != (h, w, 4):
                     return
             arr = data / 255.0
+            self.max_in = max(self.max_in, float(data.astype(np.int32).sum(-1).max()) / 255.0)
             if (data.astype(np.int32).sum(-1) <= math.floor(self.tac * 255 + 1e-6)).all():
+                self.max_tac = max(self.max_tac, float(data.astype(np.int32).sum(-1).max()) / 255.0)
                 return
-            capped = quantise_tac(cap_tac_array(arr, self.tac), self.tac)
+            capped = self._quant(cap_tac_array(arr, self.tac))
             import zlib
             xo.write(zlib.compress(capped.tobytes(), 6), filter=Name.FlateDecode)
             if "/Decode" in xo:
