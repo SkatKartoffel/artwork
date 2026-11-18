@@ -218,4 +218,4 @@ def print_spec_preview(doc):
 	variants = [v.variant or "" for v in template_variants(print_supplier(d), d.get("artwork_product_size"),
 		d.get("artwork_print_type"))]
 	return {"artwork_template": d.artwork_template, "packing_component": d.get("packing_component"),
-		"description": d.description, "variants": variants}
+		"description": d.description, "variants": variants, "artwork_supplier": d.get("artwork_supplier")}

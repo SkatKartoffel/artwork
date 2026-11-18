@@ -24,7 +24,10 @@ CUSTOM_FIELDS = {
 			description="Print parts only. Fills in the Description, the supplier template and the packing component on save."),
 		dict(fieldname="artwork_supplier", label="Print Supplier", fieldtype="Link", options="Supplier",
 			insert_after="artwork_section",
-			description="Filled in from the supplier on the Purchasing tab if left blank."),
+			description="Follows the supplier on the Purchasing tab. Pick one here only if the item has no purchasing supplier.",
+			# an early version made this a read-only copy of the matched template's supplier; clear that on update,
+			# otherwise the supplier can never change
+			fetch_from="", fetch_if_empty=0, read_only=0),
 		dict(fieldname="artwork_product_size", label="Product Size", fieldtype="Link", options="Artwork Product Size",
 			insert_after="artwork_supplier"),
 		dict(fieldname="artwork_print_type", label="Print Type", fieldtype="Link", options="Artwork Print Type",

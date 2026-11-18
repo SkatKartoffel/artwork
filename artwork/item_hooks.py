@@ -19,23 +19,34 @@ def item_validate(doc, method=None):
 	apply_print_spec(doc, meta)
 
 
-def erpnext_supplier(doc):
-	"""The supplier set in ERPNext's own fields (Item Defaults, then the Purchasing tab's Supplier Items)."""
+def purchasing_suppliers(doc) -> list:
+	"""Suppliers set in ERPNext's own Item fields: Item Defaults first, then the Purchasing tab's Supplier Items."""
+	out = []
 	for d in doc.get("item_defaults") or []:
-		if d.get("default_supplier"):
-			return d.default_supplier
+		if d.get("default_supplier") and d.default_supplier not in out:
+			out.append(d.default_supplier)
 	for s in doc.get("supplier_items") or []:
-		if s.get("supplier"):
-			return s.supplier
-	return None
+		if s.get("supplier") and s.supplier not in out:
+			out.append(s.supplier)
+	return out
+
+
+def erpnext_supplier(doc):
+	"""The first supplier set in ERPNext's own fields."""
+	found = purchasing_suppliers(doc)
+	return found[0] if found else None
 
 
 def apply_print_spec(doc, meta=None):
 	from artwork.processing import item_template
 
 	meta = meta or frappe.get_meta("Item")
-	if not doc.get("artwork_supplier"):
-		doc.artwork_supplier = erpnext_supplier(doc)
+	# The Print Supplier follows Purchasing: when the item has purchasing suppliers, the print supplier is one
+	# of them, so changing the supplier on the Purchasing tab changes it here too. With no purchasing
+	# supplier at all it can be picked by hand.
+	suppliers = purchasing_suppliers(doc)
+	if suppliers and doc.get("artwork_supplier") not in suppliers:
+		doc.artwork_supplier = suppliers[0]
 	doc.artwork_template = item_template(doc)
 	if meta.has_field("packing_component") and doc.get("artwork_print_type"):
 		doc.packing_component = frappe.db.get_value("Artwork Print Type", doc.artwork_print_type, "packing_component") or None

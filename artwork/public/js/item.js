@@ -14,6 +14,12 @@ const artworkPreview = frappe.utils.debounce((frm) => {
 	if (!frm.doc.is_print_item) return;
 	frappe.call("artwork.api.print_spec_preview", { doc: frm.doc }).then((r) => {
 		const d = r.message || {};
+		// the Print Supplier follows the supplier on the Purchasing tab
+		if (d.artwork_supplier !== undefined && (frm.doc.artwork_supplier || null) !== (d.artwork_supplier || null)) {
+			frm.doc.artwork_supplier = d.artwork_supplier || null;
+			frm.refresh_field("artwork_supplier");
+			frm.dirty();
+		}
 		if ((frm.doc.artwork_template || null) !== (d.artwork_template || null)) frm.set_value("artwork_template", d.artwork_template || null);
 		if (frm.fields_dict.packing_component && d.packing_component !== undefined
 			&& (frm.doc.packing_component || "") !== (d.packing_component || "")) {
@@ -92,4 +98,14 @@ frappe.ui.form.on("Artwork Item Upgrade", {
 		});
 	},
 	artwork_upgrades_remove(frm) { artworkPreview(frm); },
+});
+
+// Purchasing tab: changing the supplier there updates the Print Spec straight away
+frappe.ui.form.on("Item Supplier", {
+	supplier(frm) { artworkPreview(frm); },
+	supplier_items_remove(frm) { artworkPreview(frm); },
+});
+frappe.ui.form.on("Item Default", {
+	default_supplier(frm) { artworkPreview(frm); },
+	item_defaults_remove(frm) { artworkPreview(frm); },
 });

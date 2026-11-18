@@ -190,6 +190,8 @@ def process_row(proof_name: str, row_name: str):
 		from artwork.engine import process_component
 
 		job = build_job(proof, row, item, s, work)
+		# keep the row showing the template that is really used (the item's supplier may have changed)
+		frappe.db.set_value("Artwork Proof Item", row_name, "supplier_template", item_template(item), update_modified=False)
 		result = process_component(job)
 		_store_result(proof_name, row_name, result, row_signature(proof, row))
 	except Exception as e:
