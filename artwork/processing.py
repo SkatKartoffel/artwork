@@ -218,9 +218,15 @@ def build_job(proof, row, item, s, work) -> dict:
 		frappe.throw(_("Template PDF for {0} is missing.").format(tpl.name))
 
 	masks = {m.upgrade: m.mask_file for m in proof.get("masks") or [] if m.item == row.item}
-	upgrades = []
+	upgrades, spot_colours = [], []
 	for u in item.get("artwork_upgrades") or []:
 		up = frappe.get_cached_doc("Artwork Print Upgrade", u.upgrade)
+		kind = up.get("kind") or "Finish layer"
+		if kind == "Spot colour":          # an ink: stays in the artwork as its own plate
+			spot_colours.append((u.get("detail") or "").strip())
+			continue
+		if kind != "Finish layer":         # priced by the supplier, nothing to do in the artwork
+			continue
 		upgrades.append({
 			"label": up.upgrade_name,
 			"spot_name": up.spot_name,
@@ -233,7 +239,7 @@ def build_job(proof, row, item, s, work) -> dict:
 			"alt_cmyk": parse_cmyk(up.alternate_cmyk, (0.3, 0, 0, 0)),
 		})
 	known = [{"spot_name": u.spot_name, "aliases": split_list(u.aliases)}
-		for u in frappe.get_all("Artwork Print Upgrade", fields=["spot_name", "aliases"])]
+		for u in frappe.get_all("Artwork Print Upgrade", fields=["spot_name", "aliases"]) if u.spot_name]
 	logo = file_path(s.proof_logo) if s.proof_logo else None
 	if not logo or not os.path.exists(logo):
 		logo = frappe.get_app_path("artwork", "public", "images", "ps-logo-white.svg")   # the Packaged Sounds logo
@@ -247,7 +253,9 @@ def build_job(proof, row, item, s, work) -> dict:
 		("SKU", f"{item.name}  {item.item_name or ''}".strip()),
 		("Product", product or "-"),      # customer-facing sheet: never name the print supplier here
 		("Finish", finish.finish_name),
-		("Upgrades", ", ".join(u["label"] for u in upgrades) or "None"),
+		("Upgrades", ", ".join([u["label"] for u in upgrades]
+			+ ([f"{len(spot_colours)} spot colour" + ("s" if len(spot_colours) != 1 else "")
+				+ (": " + ", ".join(x for x in spot_colours if x) if any(spot_colours) else "")] if spot_colours else [])) or "None"),
 	]
 	return {
 		"art_path": file_path(row.artwork_file),
@@ -278,9 +286,10 @@ def build_job(proof, row, item, s, work) -> dict:
 		},
 		"upgrades": upgrades,
 		"known_upgrades": known,
+		"spot_colours": spot_colours,
 		"options": {
 			"outline_fonts": cint(item.get("artwork_outline_fonts")),
-			"keep_other_spots": 0,
+			"keep_other_spots": 1 if spot_colours else 0,
 			"spine_offset_mm": flt(row.spine_offset_mm),
 			"auto_detect_art_spine": 1,
 			"min_dpi": cint(s.min_dpi) or 300,

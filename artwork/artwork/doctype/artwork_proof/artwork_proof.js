@@ -41,11 +41,6 @@ frappe.ui.form.on("Artwork Proof", {
 				frm.add_custom_button(__("Send Proof to Customer"), () =>
 					frm.events.email_dialog(frm, "send_to_customer", __("Send proof")));
 				frm.change_custom_button_type(__("Send Proof to Customer"), null, "primary");
-				// no email: just open the proof for approval and copy the link to send by hand
-				frm.add_custom_button(__("Open for Approval (no email)"), async () => {
-					await frm.events.run(frm, "send_to_customer", { no_email: 1 });
-					frm.events.copy_link(frm, "artwork_approval");
-				}, __("Customer Links"));
 			}
 			frm.add_custom_button(__("Cancel Proof"), () =>
 				frappe.confirm(__("Cancel this proof?"), () => frm.events.run(frm, "cancel_proof")), __("Actions"));
@@ -74,6 +69,7 @@ frappe.ui.form.on("Artwork Proof", {
 		}[method];
 		if (msg) frappe.show_alert({ message: msg(r.message), indicator: "blue" });
 		await frm.reload_doc();
+		return r;
 	},
 
 	// One Purchase Order per print supplier, opened unsaved so staff add quantities and prices.
@@ -101,7 +97,7 @@ frappe.ui.form.on("Artwork Proof", {
 					Object.keys(it).forEach((k) => { if (!skip.has(k) && it[k] !== null && it[k] !== undefined) row[k] = it[k]; });
 				});
 				frappe.set_route("Form", "Purchase Order", po.name);
-				frappe.show_alert({ message: __("Check the quantities and save, then use Get Supplier Prices to fill in prices and set-ups"), indicator: "blue" });
+				frappe.show_alert({ message: __("Check the quantities and save: prices and set-ups fill in from the supplier price list"), indicator: "blue" });
 			});
 		};
 		const go = (s) => s.existing.length
@@ -128,17 +124,24 @@ frappe.ui.form.on("Artwork Proof", {
 	},
 
 	email_dialog(frm, method, title) {
+		const proof = method === "send_to_customer";
 		const d = new frappe.ui.Dialog({
 			title,
 			fields: [
-				{ fieldname: "recipients", fieldtype: "Data", label: __("To"), options: "Email", reqd: 1, default: frm.doc.contact_email },
+				{ fieldname: "recipients", fieldtype: "Data", label: __("To"), options: "Email", reqd: proof ? 0 : 1, default: frm.doc.contact_email,
+					description: proof ? __("Leave blank to open the proof for approval without emailing: the approval link is copied for you to send yourself.") : "" },
 				{ fieldname: "message", fieldtype: "Text Editor", label: __("Message (optional)"),
 					description: __("Leave blank to use the standard text from Artwork Settings.") },
 			],
 			primary_action_label: __("Send"),
 			primary_action(values) {
 				d.hide();
-				frm.events.run(frm, method, values).then(() => frappe.show_alert({ message: __("Sent"), indicator: "green" }));
+				frm.events.run(frm, method, values).then((r) => {
+					if (proof && r && r.message && r.message.emailed === false) {
+						frm.events.copy_link(frm, "artwork_approval");
+						frappe.show_alert({ message: __("Proof opened for approval. Nothing was emailed: the approval link is copied, send it to the customer yourself."), indicator: "orange" }, 12);
+					} else frappe.show_alert({ message: __("Sent"), indicator: "green" });
+				});
 			},
 		});
 		d.show();

@@ -1,6 +1,6 @@
 // Artwork app: print spec on the SKU (Item)
 const PRINT_SPEC_FIELDS = ["artwork_supplier", "artwork_product_size", "artwork_print_type", "artwork_variant", "artwork_stock",
-	"artwork_print_colours", "artwork_spot_colours", "artwork_finish", "artwork_coating", "artwork_notes"];
+	"artwork_print_colours", "artwork_finish", "artwork_coating", "artwork_notes"];
 
 // Variant: offer the variants this supplier has for the chosen size + print type
 function artworkVariantOptions(frm, d) {

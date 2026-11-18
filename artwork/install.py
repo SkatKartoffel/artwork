@@ -38,9 +38,7 @@ CUSTOM_FIELDS = {
 			insert_after="artwork_variant"),
 		dict(fieldname="artwork_print_colours", label="Print Colours", fieldtype="Link", options="Artwork Print Colour",
 			insert_after="artwork_stock"),
-		dict(fieldname="artwork_spot_colours", label="Spot Colours (Pantones)", fieldtype="Int", insert_after="artwork_print_colours",
-			non_negative=1, description="How many spot colours are printed on top of the print colours. Suppliers charge for each."),
-		dict(fieldname="artwork_cb1", fieldtype="Column Break", insert_after="artwork_spot_colours"),
+		dict(fieldname="artwork_cb1", fieldtype="Column Break", insert_after="artwork_print_colours"),
 		dict(fieldname="artwork_finish", label="Finish", fieldtype="Link", options="Artwork Finish",
 			insert_after="artwork_cb1",
 			description="Gloss / Matt → ISO Coated v2 300%; Reverse Board / Uncoated → Euroscale Uncoated v2"),
@@ -53,7 +51,7 @@ CUSTOM_FIELDS = {
 			description="Picked automatically from Print Supplier + Product Size + Print Type."),
 		dict(fieldname="artwork_upgrades_sb", fieldtype="Section Break", insert_after="artwork_template",
 			depends_on="eval:doc.is_print_item"),
-		dict(fieldname="artwork_upgrades", label="Print Upgrades (Spot UV, foil…)", fieldtype="Table",
+		dict(fieldname="artwork_upgrades", label="Finishes, Spot Colours & Extras", fieldtype="Table",
 			options="Artwork Item Upgrade", insert_after="artwork_upgrades_sb"),
 		dict(fieldname="artwork_notes", label="Notes for Supplier", fieldtype="Small Text", insert_after="artwork_upgrades",
 			description="Added to the end of the Description."),
@@ -114,6 +112,15 @@ UPGRADES = [
 	("Emboss", "Emboss", "Embossing, Blind Emboss", "#8E6CEF", 40, "0,30,0,0", "Separate file"),
 	("Deboss", "Deboss", "Debossing, Blind Deboss", "#6C8EEF", 40, "30,15,0,0", "Separate file"),
 	("White Ink", "White", "White Ink, Opaque White, Underprint White", "#F2F2F2", 80, "0,0,0,8", "Artwork spot"),
+	("Relief UV", "Relief UV", "Raised UV, Relief Varnish, 3D UV", "#1C8FD1", 55, "40,0,0,0", "Artwork spot"),
+]
+# (name, kind): things on top of the base print that have no finish layer of their own
+OTHER_UPGRADES = [
+	("Spot Colour", "Spot colour"),          # one row per Pantone; the reference goes in Detail on the item
+	("Metallic Pantone", "Spot colour"),
+	("Die-cut", "Pricing only"),
+	("Machine Numbering", "Pricing only"),
+	("Hand Numbering", "Pricing only"),
 ]
 
 
@@ -132,6 +139,7 @@ def after_migrate():
 	ensure_print_group()
 	seed_settings()  # fills only settings that have never been set (e.g. ones added in an update)
 	create_custom_fields(CUSTOM_FIELDS, update=True)
+	seed_upgrades()
 
 
 def ensure_roles():
@@ -172,11 +180,20 @@ def seed_masters():
 		if not frappe.db.exists("Artwork Finish", name):
 			frappe.get_doc({"doctype": "Artwork Finish", "finish_name": name, "colour_profile": profile}).insert(
 				ignore_permissions=True)
+	seed_upgrades()
+
+
+def seed_upgrades():
+	"""Finishes, spot colours and priced extras an item can carry. Only adds what is missing."""
 	for name, spot, aliases, colour, opacity, alt, source in UPGRADES:
 		if not frappe.db.exists("Artwork Print Upgrade", name):
 			frappe.get_doc({"doctype": "Artwork Print Upgrade", "upgrade_name": name, "spot_name": spot,
 				"aliases": aliases, "display_colour": colour, "preview_opacity": opacity,
 				"alternate_cmyk": alt, "default_source": source}).insert(ignore_permissions=True)
+	for name, kind in OTHER_UPGRADES:
+		if not frappe.db.exists("Artwork Print Upgrade", name):
+			frappe.get_doc({"doctype": "Artwork Print Upgrade", "upgrade_name": name, "kind": kind,
+				"enabled": 1}).insert(ignore_permissions=True)
 
 
 def seed_settings():

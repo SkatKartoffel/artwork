@@ -125,6 +125,16 @@ def process_component(job: dict) -> dict:
     for s in unselected_upgrade_spots:
         rep.error("UNSELECTED_FINISH", f"Artwork contains finish spot '{s}' but that print upgrade is not selected on this "
                   "component. It was removed from the art – add the upgrade or confirm with the customer.")
+    wanted = job.get("spot_colours") or []
+    if wanted:
+        named = [w for w in wanted if w]
+        missing = [w for w in named if not any(name_matches(sp, [w]) for sp in other_spots)]
+        if missing:
+            rep.warn("SPOT_COLOUR_MISSING", "Spot colour(s) on the item not found in the artwork: " + ", ".join(missing)
+                     + ". Found: " + (", ".join(other_spots) or "none") + ".")
+        if len(other_spots) != len(wanted):
+            rep.warn("SPOT_COLOUR_COUNT", f"The item has {len(wanted)} spot colour(s) but the artwork has {len(other_spots)}"
+                     + (": " + ", ".join(other_spots) if other_spots else "") + ". The supplier charges per spot colour.")
     if other_spots:
         if opt.get("keep_other_spots"):
             rep.warn("SPOT_KEPT", f"Spot colour(s) kept as separate plates: {', '.join(other_spots)}.")

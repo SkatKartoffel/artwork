@@ -234,8 +234,8 @@ class ArtworkProof(Document):
 
 	@frappe.whitelist()
 	def send_to_customer(self, recipients=None, message=None, no_email=0):
-		"""Open the proof for customer approval and email them the link.
-		no_email=1: only open it for approval - staff copy the approval link and send it themselves."""
+		"""Open the proof for customer approval and email them the link. With no address (or no outgoing
+		email account on the site) it is still opened: staff copy the approval link and send it themselves."""
 		self._fresh()
 		from artwork.processing import build_combined_proof, file_path
 
@@ -249,10 +249,8 @@ class ArtworkProof(Document):
 			lines = "".join(f"<li><b>{escape_html(w.item)}</b>: {escape_html(w.message)}</li>" for w in self.open_errors()[:10])
 			frappe.throw(_("Preflight errors must be fixed or ticked as OK'd before sending:") + f"<ul>{lines}</ul>",
 				title=_("Unresolved preflight errors"))
-		no_email = cint(no_email)
-		recipients = recipients or self.contact_email
-		if not recipients and not no_email:
-			frappe.throw(_("Set the customer email first, or use Customer Links > Open for Approval (no email)."))
+		recipients = (recipients or "").strip()
+		no_email = cint(no_email) or not recipients       # no address: open it, staff send the link themselves
 
 		self.revision = cint(self.revision) + 1
 		self.ensure_access_key()
@@ -284,15 +282,12 @@ class ArtworkProof(Document):
 			except frappe.OutgoingEmailError:
 				# no outgoing email account on this site: still open the proof, staff send the link themselves
 				frappe.clear_messages()
-				frappe.msgprint(_("No outgoing email account is set up, so nothing was emailed. The proof is open for "
-					"approval – use Customer Links > Copy Approval Link and send it to the customer yourself."),
-					title=_("Proof opened, email not sent"), indicator="orange")
 		self.status = "Sent to Customer"
 		self.sent_on = now_datetime()
 		self.add_log("Sent to customer" if emailed else "Opened for approval (link not emailed)", recipients if emailed else "")
 		self.flags.status_set = True
 		self.save()
-		return url
+		return {"url": url, "emailed": emailed}
 
 	@frappe.whitelist()
 	def new_revision(self):

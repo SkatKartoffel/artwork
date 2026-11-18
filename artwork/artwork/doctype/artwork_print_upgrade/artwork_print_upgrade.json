@@ -13,6 +13,7 @@
  "editable_grid": 0,
  "field_order": [
   "upgrade_name",
+  "kind",
   "spot_name",
   "aliases",
   "enabled",
@@ -32,12 +33,24 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "Finish layer\nSpot colour\nPricing only",
+   "default": "Finish layer",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Finish layer: a finish with its own layer in the artwork (Spot UV, foil, emboss). Spot colour: an extra ink (Pantone) that stays in the artwork as its own plate. Pricing only: priced by the supplier but nothing in the artwork (numbering, die-cut)."
+  },
+  {
    "fieldname": "spot_name",
    "fieldtype": "Data",
    "label": "Spot Colour Name",
-   "reqd": 1,
+   "reqd": 0,
    "in_list_view": 1,
-   "description": "Separation name written to the print PDF, e.g. <b>Spot UV</b>, <b>Foil Gold</b>."
+   "description": "Finish layer: the spot colour name the designer uses for it in the artwork. Spot colour: leave blank (the Pantone goes in Detail on the item).",
+   "mandatory_depends_on": "eval:doc.kind==\"Finish layer\"",
+   "depends_on": "eval:doc.kind!=\"Pricing only\""
   },
   {
    "fieldname": "aliases",

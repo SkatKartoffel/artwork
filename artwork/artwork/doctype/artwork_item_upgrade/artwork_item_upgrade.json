@@ -13,6 +13,7 @@
  "editable_grid": 1,
  "field_order": [
   "upgrade",
+  "detail",
   "source",
   "page"
  ],
@@ -25,6 +26,14 @@
    "reqd": 1,
    "in_list_view": 1,
    "columns": 4
+  },
+  {
+   "fieldname": "detail",
+   "fieldtype": "Data",
+   "label": "Detail",
+   "in_list_view": 1,
+   "columns": 3,
+   "description": "What exactly: the Pantone reference for a spot colour (PANTONE 485 C), the coverage for Spot UV (up to 25%), the foil colour."
   },
   {
    "fieldname": "source",
