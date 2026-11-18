@@ -31,6 +31,11 @@ PROJECT_LABEL = {
 
 
 class ArtworkProof(Document):
+	def before_insert(self):
+		# a new proof starts with the house default (Artwork Settings); staff can change it per proof
+		if not self.flags.get("outline_fonts_set"):
+			self.outline_fonts = cint(settings().outline_fonts_default)
+
 	def validate(self):
 		if not self.title:
 			self.title = " – ".join(filter(None, [self.project_name or self.project, self.customer]))

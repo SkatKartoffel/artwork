@@ -288,7 +288,7 @@ def build_job(proof, row, item, s, work) -> dict:
 		"known_upgrades": known,
 		"spot_colours": spot_colours,
 		"options": {
-			"outline_fonts": cint(item.get("artwork_outline_fonts")),
+			"outline_fonts": cint(proof.get("outline_fonts")),
 			"keep_other_spots": 1 if spot_colours else 0,
 			"spine_offset_mm": flt(row.spine_offset_mm),
 			"auto_detect_art_spine": 1,

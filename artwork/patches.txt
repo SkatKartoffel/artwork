@@ -16,3 +16,4 @@ artwork.patches.standard_templates_no_supplier_name
 artwork.patches.standard_templates_key_tag
 artwork.patches.print_supplier_follows_purchasing
 artwork.patches.one_table_for_finishes_and_spot_colours
+artwork.patches.outline_fonts_on_the_proof

@@ -28,6 +28,7 @@
   "items",
   "masks",
   "items_html",
+  "outline_fonts",
   "spellcheck",
   "spellcheck_ignore",
   "sb_warn",
@@ -157,6 +158,13 @@
    "fieldname": "items_html",
    "fieldtype": "HTML",
    "label": "Proofs"
+  },
+  {
+   "fieldname": "outline_fonts",
+   "fieldtype": "Check",
+   "label": "Convert fonts to outlines",
+   "default": "1",
+   "description": "Turns all live text in the print files into outlines, so the supplier needs no fonts. Applies to every item on this proof. Change it, then Process All Artwork."
   },
   {
    "fieldname": "spellcheck",
