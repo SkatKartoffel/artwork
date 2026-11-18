@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import add_days, cint, escape_html, get_url, now_datetime, nowdate
+from frappe.utils import add_days, cint, escape_html, flt, get_url, now_datetime, nowdate
 
 from artwork.processing import (
 	OUTPUT_FIELDS,
