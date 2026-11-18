@@ -66,6 +66,20 @@ class TestEngine(unittest.TestCase):
         self.assertGreater(ink["max_before"], 300)
         self.assertLessEqual(ink["max_after"], 301)
 
+    def test_ink_limit_is_absolute(self):
+        """8-bit rounding must never push a pixel over the limit (300% must not read as 301%)."""
+        import numpy as np
+
+        from artwork.engine.walker import cap_tac, cap_tac_array, quantise_tac
+        rng = np.random.default_rng(7)
+        a = rng.random((50000, 4))
+        a[:50] = 1.0
+        for lim in (3.0, 2.6):
+            q = quantise_tac(cap_tac_array(a, lim), lim).astype(int)
+            self.assertLessEqual(q.sum(-1).max(), int(lim * 255 + 1e-6))
+            for row in a[:2000]:
+                self.assertLessEqual(sum(round(v, 5) for v in cap_tac(*row, lim)), lim + 1e-9)
+
     def test_plates_and_overprint(self):
         out = os.path.join(self.tmp, "seps")
         os.makedirs(out, exist_ok=True)

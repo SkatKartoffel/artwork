@@ -20,6 +20,7 @@ resulting plate never knocks out the artwork beneath it.
 """
 from __future__ import annotations
 
+import math
 import re
 from collections import Counter
 
@@ -187,7 +188,52 @@ def cap_tac(c, m, y, k, limit):
     if c + m + y + k > limit and cmy > 0:
         f = max(0.0, limit - k) / cmy
         c, m, y = c * f, m * f, y * f
+    # the limit is an absolute maximum: round the way the values are written (5 decimals) without going over
+    k = round(k, 5)
+    c, m, y = (math.floor(v * 1e5 + 1e-9) / 1e5 for v in (c, m, y))
+    over = c + m + y + k - limit
+    if over > 1e-9:
+        big = max(range(3), key=lambda i: (c, m, y)[i])
+        v = [c, m, y]
+        v[big] = max(0.0, math.floor((v[big] - over) * 1e5 + 1e-9) / 1e5)
+        c, m, y = v
+    short = limit - (c + m + y + k)          # ... and without falling short of it either: exactly the limit
+    if short > 1e-9:
+        v = [c, m, y]
+        for i in sorted(range(3), key=lambda i: -v[i]):
+            if v[i] + short <= 1.0:
+                v[i] = round(v[i] + short, 5)
+                break
+        c, m, y = v
     return c, m, y, k
+
+
+def quantise_tac(a: np.ndarray, limit: float) -> np.ndarray:
+    """Capped CMYK floats (0..1) -> 8-bit, guaranteeing no pixel adds up to more than the limit.
+    Plain rounding can push a pixel up to 0.8% over (300% -> 301%)."""
+    a = np.clip(a, 0, 1)
+    q = np.round(a * 255).astype(np.int32)
+    max_sum = int(math.floor(limit * 255 + 1e-6))
+    at_limit = a.sum(-1) >= limit - 1e-6          # pixels that were capped should land exactly on the limit
+    for _ in range(4):
+        short = np.where(at_limit, max_sum - q.sum(-1), 0)
+        low = short > 0
+        if not low.any():
+            break
+        room = np.where(q[..., :3] < 255, q[..., :3], -1)
+        idx = room.argmax(-1)
+        cur = np.take_along_axis(q[..., :3], idx[..., None], -1)[..., 0]
+        add = np.where(low & (cur < 255), np.minimum(short, 255 - cur), 0)
+        np.put_along_axis(q[..., :3], idx[..., None], (cur + add)[..., None], -1)
+    for _ in range(6):
+        over = q.sum(-1) - max_sum
+        bad = over > 0
+        if not bad.any():
+            break
+        idx = q[..., :3].argmax(-1)
+        take = np.where(bad, np.minimum(over, np.take_along_axis(q[..., :3], idx[..., None], -1)[..., 0]), 0)
+        np.put_along_axis(q[..., :3], idx[..., None], np.take_along_axis(q[..., :3], idx[..., None], -1) - take[..., None], -1)
+    return q.astype(np.uint8)
 
 
 def cap_tac_array(a: np.ndarray, limit: float) -> np.ndarray:
@@ -548,7 +594,7 @@ class Walker:
             cols = np.array([eval_fn(fn, t)[:3] for t in ts], dtype=np.float64)
             cmyk = self.conv.rgb_many(cols, cs) if family == "rgb" else self.conv.lab_many(cols)
             cmyk = cap_tac_array(cmyk, self.tac)
-            st = pikepdf.Stream(self.pdf, np.round(cmyk * 255).astype(np.uint8).tobytes())
+            st = pikepdf.Stream(self.pdf, quantise_tac(cmyk, self.tac).tobytes())
             st.FunctionType = 0
             st.Domain = Array(dom)
             st.Range = Array([0, 1] * 4)
@@ -615,7 +661,7 @@ class Walker:
                 cmyk = self.conv.lab_many(np.stack([arr[:, 0] / 2.55, arr[:, 1] - 128, arr[:, 2] - 128], -1))
             cmyk = cap_tac_array(cmyk, self.tac)
             cs[1] = Name.DeviceCMYK
-            cs[3] = pikepdf.String(np.round(cmyk * 255).astype(np.uint8).tobytes())
+            cs[3] = pikepdf.String(quantise_tac(cmyk, self.tac).tobytes())
             self.stats["indexed palettes converted"] += 1
         except Exception as e:
             self.stats[f"indexed palette skipped ({type(e).__name__})"] += 1
@@ -749,7 +795,7 @@ class Walker:
             if cs_info(cs)[0] not in ("rgb", "lab"):
                 return [ins]
             data = self.conv.image(iim.as_pil_image(), cs)
-            capped = np.round(cap_tac_array(data / 255.0, self.tac) * 255).astype(np.uint8)
+            capped = quantise_tac(cap_tac_array(data / 255.0, self.tac), self.tac)
             import zlib
             st = pikepdf.Stream(self.pdf, zlib.compress(capped.tobytes(), 6))
             st.Filter = Name.FlateDecode
@@ -819,7 +865,7 @@ class Walker:
             if self.conv is not None and info[0] in ("rgb", "lab") and not xo.get("/ImageMask", False):
                 pil = pikepdf.PdfImage(xo).as_pil_image()
                 data = self.conv.image(pil, cs)
-                capped = np.round(cap_tac_array(data / 255.0, self.tac) * 255).astype(np.uint8)
+                capped = quantise_tac(cap_tac_array(data / 255.0, self.tac), self.tac)
                 import zlib
                 xo.write(zlib.compress(capped.tobytes(), 6), filter=Name.FlateDecode)
                 xo.ColorSpace = Name.DeviceCMYK
@@ -836,8 +882,8 @@ class Walker:
                 raw = bytes(lut.read_bytes() if isinstance(lut, pikepdf.Stream) else lut)
                 arr = np.frombuffer(raw, dtype=np.uint8)[: (len(raw) // 4) * 4].reshape(-1, 4) / 255.0
                 capped = cap_tac_array(arr, self.tac)
-                if np.abs(capped - arr).max() > 1 / 255:
-                    cs[3] = pikepdf.String(np.round(capped * 255).astype(np.uint8).tobytes())
+                if (np.round(arr * 255).sum(-1) > math.floor(self.tac * 255 + 1e-6)).any():
+                    cs[3] = pikepdf.String(quantise_tac(capped, self.tac).tobytes())
                     self.stats["indexed palettes capped"] += 1
                 return
             if info[0] != "cmyk" or int(xo.get("/BitsPerComponent", 8)) != 8:
@@ -856,9 +902,9 @@ class Walker:
                 if data.shape != (h, w, 4):
                     return
             arr = data / 255.0
-            if (arr.sum(-1) <= self.tac + 0.005).all():
+            if (data.astype(np.int32).sum(-1) <= math.floor(self.tac * 255 + 1e-6)).all():
                 return
-            capped = np.round(cap_tac_array(arr, self.tac) * 255).astype(np.uint8)
+            capped = quantise_tac(cap_tac_array(arr, self.tac), self.tac)
             import zlib
             xo.write(zlib.compress(capped.tobytes(), 6), filter=Name.FlateDecode)
             if "/Decode" in xo:
