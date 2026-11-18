@@ -133,6 +133,15 @@ class ArtworkProof(Document):
 				else:
 					row.processing_status = "Not Processed"
 
+	def _job_running(self) -> bool:
+		"""Is this proof's background job queued or running right now?"""
+		try:
+			from frappe.utils.background_jobs import is_job_enqueued
+
+			return bool(is_job_enqueued(f"artwork-proof::{self.name}"))
+		except Exception:
+			return True
+
 	def _queue(self, row, sig=None):
 		row.input_signature = sig or row_signature(self, row)
 		row.processing_status = "Queued"
@@ -187,8 +196,12 @@ class ArtworkProof(Document):
 		self._fresh()
 		self._check_unlocked()
 		n = 0
+		running = self._job_running()
 		for r in self.items:
-			if (row and r.name != row) or not r.artwork_file or r.processing_status in ("Queued", "Processing"):
+			# a row still marked Queued / Processing with no job behind it was cut off (worker restarted or
+			# killed) and would otherwise be stuck for good - let it be queued again
+			if (row and r.name != row) or not r.artwork_file or (
+					r.processing_status in ("Queued", "Processing") and running):
 				continue
 			self._queue(r)
 			n += 1

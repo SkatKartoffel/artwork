@@ -208,13 +208,14 @@ def cap_tac(c, m, y, k, limit):
     return c, m, y, k
 
 
-def quantise_tac(a: np.ndarray, limit: float) -> np.ndarray:
+def quantise_tac(a: np.ndarray, limit: float, all_capped: bool = False) -> np.ndarray:
     """Capped CMYK floats (0..1) -> 8-bit, guaranteeing no pixel adds up to more than the limit.
     Plain rounding can push a pixel up to 0.8% over (300% -> 301%)."""
     a = np.clip(a, 0, 1)
     q = np.round(a * 255).astype(np.int32)
     max_sum = int(math.floor(limit * 255 + 1e-6))
-    at_limit = a.sum(-1) >= limit - 1e-6          # pixels that were capped should land exactly on the limit
+    # pixels that were capped should land exactly on the limit
+    at_limit = np.ones(a.shape[:-1], dtype=bool) if all_capped else a.sum(-1) >= limit - 1e-6
     for _ in range(4):
         short = np.where(at_limit, max_sum - q.sum(-1), 0)
         low = short > 0
@@ -314,6 +315,30 @@ class Walker:
         r = cap_tac(c, m, y, k, self.tac)
         self.max_tac = max(self.max_tac, sum(r))
         return r
+
+    def _cap_u8(self, data: np.ndarray, block: int = 2_000_000):
+        """Limit total ink on 8-bit CMYK pixels (..., 4).  Only the pixels over the limit are touched, a block
+        at a time, so even very large images need little extra memory.  -> (pixels, changed)"""
+        max_sum = int(math.floor(self.tac * 255 + 1e-6))
+        flat = data.reshape(-1, 4)
+        out = None
+        hi_in = 0
+        for i in range(0, flat.shape[0], block):
+            blk = flat[i:i + block]
+            sums = blk.sum(-1, dtype=np.int32)
+            hi_in = max(hi_in, int(sums.max()) if sums.size else 0)
+            over = sums > max_sum
+            if not over.any():
+                continue
+            if out is None:
+                out = flat.copy()
+            capped = cap_tac_array(blk[over].astype(np.float64) / 255.0, self.tac)
+            out[i:i + block][over] = quantise_tac(capped, self.tac, all_capped=True)
+        self.max_in = max(self.max_in, hi_in / 255.0)
+        self.max_tac = max(self.max_tac, min(hi_in, max_sum) / 255.0)
+        if out is None:
+            return data, False
+        return out.reshape(data.shape), True
 
     def _quant(self, arr):
         q = quantise_tac(arr, self.tac)
@@ -824,8 +849,7 @@ class Walker:
             if cs_info(cs)[0] not in ("rgb", "lab"):
                 return [ins]
             data = self.conv.image(iim.as_pil_image(), cs)
-            self.max_in = max(self.max_in, float(np.asarray(data, dtype=np.int32).sum(-1).max()) / 255.0)
-            capped = self._quant(cap_tac_array(data / 255.0, self.tac))
+            capped, _ = self._cap_u8(np.ascontiguousarray(data, dtype=np.uint8))
             import zlib
             st = pikepdf.Stream(self.pdf, zlib.compress(capped.tobytes(), 6))
             st.Filter = Name.FlateDecode
@@ -895,8 +919,7 @@ class Walker:
             if self.conv is not None and info[0] in ("rgb", "lab") and not xo.get("/ImageMask", False):
                 pil = pikepdf.PdfImage(xo).as_pil_image()
                 data = self.conv.image(pil, cs)
-                self.max_in = max(self.max_in, float(np.asarray(data, dtype=np.int32).sum(-1).max()) / 255.0)
-                capped = self._quant(cap_tac_array(data / 255.0, self.tac))
+                capped, _ = self._cap_u8(np.ascontiguousarray(data, dtype=np.uint8))
                 import zlib
                 xo.write(zlib.compress(capped.tobytes(), 6), filter=Name.FlateDecode)
                 xo.ColorSpace = Name.DeviceCMYK
@@ -938,12 +961,9 @@ class Walker:
                 data = np.asarray(pikepdf.PdfImage(xo).as_pil_image(), dtype=np.uint8)
                 if data.shape != (h, w, 4):
                     return
-            arr = data / 255.0
-            self.max_in = max(self.max_in, float(data.astype(np.int32).sum(-1).max()) / 255.0)
-            if (data.astype(np.int32).sum(-1) <= math.floor(self.tac * 255 + 1e-6)).all():
-                self.max_tac = max(self.max_tac, float(data.astype(np.int32).sum(-1).max()) / 255.0)
+            capped, changed = self._cap_u8(np.ascontiguousarray(data, dtype=np.uint8))
+            if not changed:
                 return
-            capped = self._quant(cap_tac_array(arr, self.tac))
             import zlib
             xo.write(zlib.compress(capped.tobytes(), 6), filter=Name.FlateDecode)
             if "/Decode" in xo:
