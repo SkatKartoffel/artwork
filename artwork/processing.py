@@ -233,12 +233,17 @@ def build_job(proof, row, item, s, work) -> dict:
 	known = [{"spot_name": u.spot_name, "aliases": split_list(u.aliases)}
 		for u in frappe.get_all("Artwork Print Upgrade", fields=["spot_name", "aliases"])]
 	logo = file_path(s.proof_logo) if s.proof_logo else None
+	if not logo or not os.path.exists(logo):
+		logo = frappe.get_app_path("artwork", "public", "images", "ps-logo-white.svg")   # the Packaged Sounds logo
+	product = " ".join(filter(None, [item.get("artwork_product_size"), item.get("artwork_print_type")]))
+	if product and item.get("artwork_variant"):
+		product += f" ({item.artwork_variant})"
 	details = [
 		("Proof", f"{proof.name}  rev {cint(proof.revision) or 1}"),
 		("Job ticket", f"{proof.project}  {proof.project_name or ''}".strip()),
 		("Customer", proof.customer or ""),
 		("SKU", f"{item.name}  {item.item_name or ''}".strip()),
-		("Supplier template", tpl.template_name),
+		("Product", product or "-"),      # customer-facing sheet: never name the print supplier here
 		("Finish", finish.finish_name),
 		("Upgrades", ", ".join(u["label"] for u in upgrades) or "None"),
 	]

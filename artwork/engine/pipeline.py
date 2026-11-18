@@ -12,7 +12,7 @@ import shutil
 
 from . import colour, geometry
 from .compose import compose
-from .normalise import normalise_page, page_count, to_pdf
+from .normalise import normalise_page, page_count, template_layers, to_pdf
 from .preflight import run_preflight
 from .preview import proof_sheet, render_preview
 from .util import EngineError, Report, mm, pt
@@ -242,10 +242,38 @@ def process_component(job: dict) -> dict:
     art_layer = {"path": W("art_final.pdf"), "offset": (dx, dy), "label": "Artwork (CMYK)", "clip": tpl["bleed"]}
     tpl_layer = {"path": W("tpl_spot.pdf"), "offset": (0, 0), "label": f"{tspot} (spot, non-printing)", "overprint": True}
     print_pdf = os.path.join(work, f"{base}_print.pdf")
-    compose(print_pdf, tpl, [art_layer, *[u["layer"] for u in up_layers], tpl_layer],
-            output_intent={"profile_path": col["profile_path"], "identifier": col.get("identifier") or "CMYK",
-                           "info": col.get("identifier") or ""},
-            title=base)
+    tpage = int(tcfg.get("page") or 1) - 1
+    tlayers = [] if opt.get("flatten_template") else template_layers(tcfg["path"], tpage)
+    if tlayers:
+        # a layered template (the Packaged Sounds standard): keep its layers and spot colours as they are,
+        # with the artwork inside the template's own "Artwork" layer
+        names = [l["name"] for l in tlayers]                       # top of the layer panel first
+        if "Artwork" in names:
+            art_layer["label"] = "Artwork"
+        stack = [art_layer, *[u["layer"] for u in up_layers]]
+        for i, l in enumerate(reversed(tlayers)):
+            if l["name"] == art_layer["label"]:
+                continue
+            normalise_page(tcfg["path"], tpage, W(f"tpl_layer{i}.pdf"), only_layer=l["name"])
+            stack.append({"path": W(f"tpl_layer{i}.pdf"), "offset": (0, 0), "label": l["name"], "overprint": True,
+                          "off": not l["on"]})
+        panel = []
+        for n in names:
+            if n == art_layer["label"]:
+                panel += [u["layer"]["label"] for u in reversed(up_layers)]
+            panel.append(n)
+        if art_layer["label"] not in names:
+            panel += [u["layer"]["label"] for u in reversed(up_layers)] + [art_layer["label"]]
+        rep.info["template_layers"] = names
+        compose(print_pdf, tpl, stack, panel_order=panel,
+                output_intent={"profile_path": col["profile_path"], "identifier": col.get("identifier") or "CMYK",
+                               "info": col.get("identifier") or ""},
+                title=base)
+    else:
+        compose(print_pdf, tpl, [art_layer, *[u["layer"] for u in up_layers], tpl_layer],
+                output_intent={"profile_path": col["profile_path"], "identifier": col.get("identifier") or "CMYK",
+                               "info": col.get("identifier") or ""},
+                title=base)
 
     preview_png = os.path.join(work, f"{base}_preview.png")
     tpl_prev = {"label": tspot, "spot": tspot, "rgb": tcfg.get("display_rgb") or "#E6007E", "opacity": 1.0,

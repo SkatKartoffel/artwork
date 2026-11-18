@@ -87,15 +87,29 @@ def proof_sheet(out_pdf, preview_png, details: list[tuple[str, str]], warnings: 
     # header bar
     page.draw_rect(pymupdf.Rect(0, 0, W, 64), color=None, fill=ink)
     logo = brand.get("logo_path")
-    x_title = M
+    x_title, placed = M, False
     if logo and os.path.exists(logo):
         try:
-            page.insert_image(pymupdf.Rect(M, 12, M + 160, 52), filename=logo, keep_proportion=True)
-            x_title = M + 175
+            box = pymupdf.Rect(M, 14, M + 230, 50)
+            if logo.lower().endswith(".svg"):
+                svg = pymupdf.open(logo)                      # vector logo: place it as vector
+                lp = pymupdf.open("pdf", svg.convert_to_pdf())
+                r = lp[0].rect
+                w = min(box.width, box.height * r.width / r.height)
+                box = pymupdf.Rect(M, box.y0 + (box.height - w * r.height / r.width) / 2, M + w, 0)
+                box.y1 = box.y0 + w * r.height / r.width
+                page.show_pdf_page(box, lp, 0)
+            else:
+                pm = pymupdf.Pixmap(logo)
+                w = min(box.width, box.height * pm.width / pm.height)
+                box = pymupdf.Rect(M, box.y0, M + w, box.y1)
+                page.insert_image(box, filename=logo, keep_proportion=True)
+            x_title, placed = box.x1 + 18, True
         except Exception:
-            pass
-    page.insert_text((x_title, 42), (brand.get("company") or "PACKAGED SOUNDS").upper() + "  ·  ARTWORK PROOF",
-                     fontsize=20, fontname="hebo", color=(1, 1, 1))
+            placed = False
+    # with a logo in the bar the company name is not repeated in text
+    title = "ARTWORK PROOF" if placed else (brand.get("company") or "PACKAGED SOUNDS").upper() + "  ·  ARTWORK PROOF"
+    page.insert_text((x_title, 42 if not placed else 37.5), title, fontsize=20 if not placed else 15, fontname="hebo", color=(1, 1, 1))
     ref = clean(str(dict(details).get("Proof", "")))
     if ref:
         page.insert_text((W - M - 260, 42), ref, fontsize=13, fontname="hebo", color=(1, 1, 1))

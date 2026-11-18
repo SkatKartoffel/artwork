@@ -78,51 +78,100 @@ def _box(v):
     return [min(a[0], a[2]), min(a[1], a[3]), max(a[0], a[2]), max(a[1], a[3])]
 
 
-def _drop_hidden_layers(spdf, out, page, res, data: bytes) -> bytes:
-    """Remove page content that sits on layers (OCGs) switched off by default, e.g. a template's hidden notes layer."""
+_PAINT_OPS = {"S", "s", "f", "F", "f*", "B", "B*", "b", "b*", "Tj", "TJ", "'", '"', "Do", "sh", "INLINE"}
+
+
+def _ocg_state(spdf):
+    """-> (names bottom-to-top as listed, set of names that are off by default)"""
+    ocp = spdf.Root.get("/OCProperties")
+    if ocp is None or not len(ocp.get("/OCGs", [])):
+        return [], set()
+    d = ocp.get("/D", {})
+    off = {o.objgen for o in (d.get("/OFF") or [])}
+    if d.get("/BaseState") == Name.OFF:
+        on = {o.objgen for o in (d.get("/ON") or [])}
+        off |= {o.objgen for o in ocp.OCGs if o.objgen not in on}
+    order = [o for o in (d.get("/Order") or []) if isinstance(o, Dictionary)] or list(ocp.OCGs)
+    listed = {o.objgen for o in order}
+    order += [o for o in ocp.OCGs if o.objgen not in listed]
+    names = [str(o.get("/Name")) for o in order]           # top of the layer panel first
+    return names[::-1], {str(o.get("/Name")) for o in ocp.OCGs if o.objgen in off}
+
+
+def _filter_layers(spdf, out, res, data: bytes, only_layer: str | None = None) -> bytes:
+    """only_layer=None: drop content on layers (OCGs) that are switched off by default, e.g. a template's
+    hidden notes layer.  only_layer="Guides": keep just that layer's content (plus graphics state set outside it)."""
     try:
-        d = spdf.Root.get("/OCProperties", {}).get("/D", {})
-        off = {o.objgen for o in (d.get("/OFF") or [])}
-        if d.get("/BaseState") == Name.OFF:
-            on = {o.objgen for o in (d.get("/ON") or [])}
-            off |= {o.objgen for o in spdf.Root.OCProperties.OCGs if o.objgen not in on}
-        if not off:
+        _, hidden_names = _ocg_state(spdf)
+        if only_layer is None and not hidden_names:
             return data
         props = (res.get("/Properties") or {}) if res is not None else {}
-        hidden = set()
-        for k, v in props.items():
-            name = v.get("/Name") if isinstance(v, Dictionary) else None
-            if name is None:
-                continue
-            # the page was copied into a new file, so match the layer by name against the source's hidden layers
-            if any(str(o.get("/Name")) == str(name) for o in spdf.Root.OCProperties.OCGs if o.objgen in off):
-                hidden.add(str(k))
-        if not hidden:
-            return data
+        layer_of = {str(k): str(v.get("/Name")) for k, v in props.items() if isinstance(v, Dictionary) and "/Name" in v}
         tmp = out.make_stream(data)
-        keep, depth, skip_from = [], 0, None
+        keep, depth, cur, cur_depth = [], 0, None, None
         for ins in pikepdf.parse_content_stream(tmp):
             op = str(ins.operator) if not isinstance(ins, pikepdf.ContentStreamInlineImage) else "INLINE"
             if op in ("BDC", "BMC"):
                 depth += 1
-                if skip_from is None and op == "BDC" and len(ins.operands) == 2 and ins.operands[0] == Name.OC \
-                        and str(ins.operands[1]) in hidden:
-                    skip_from = depth
+                if cur_depth is None and op == "BDC" and len(ins.operands) == 2 and ins.operands[0] == Name.OC \
+                        and str(ins.operands[1]) in layer_of:
+                    cur, cur_depth = layer_of[str(ins.operands[1])], depth
                     continue
             elif op == "EMC":
-                if skip_from is not None and depth == skip_from:
-                    skip_from = None
+                if cur_depth is not None and depth == cur_depth:
+                    cur, cur_depth = None, None
                     depth -= 1
                     continue
                 depth -= 1
-            if skip_from is None:
+            if only_layer is None:
+                if cur is None or cur not in hidden_names:
+                    keep.append(ins)
+            elif cur == only_layer or (cur is None and op not in _PAINT_OPS):
                 keep.append(ins)
         return pikepdf.unparse_content_stream(keep)
     except Exception:
-        return data
+        return data if only_layer is None else b""
 
 
-def normalise_page(src: str, page_index: int, dst: str) -> dict:
+def template_layers(src: str, page_index: int = 0) -> list[dict]:
+    """Layers of a template that can be carried into the print file as they are: [{name, on}] in the
+    template's layer-panel order (top first).  Empty when the template has no layers, or has anything outside
+    them or in a printing (process) colour - such templates are flattened to one non-printing spot instead."""
+    try:
+        with pikepdf.open(src) as spdf:
+            names, hidden = _ocg_state(spdf)
+            if not names:
+                return []
+            page = spdf.pages[page_index]
+            props = page.obj.get("/Resources", Dictionary()).get("/Properties") or {}
+            layer_of = {str(k): str(v.get("/Name")) for k, v in props.items() if isinstance(v, Dictionary) and "/Name" in v}
+            depth, cur_depth = 0, None
+            for ins in pikepdf.parse_content_stream(page):
+                op = str(ins.operator) if not isinstance(ins, pikepdf.ContentStreamInlineImage) else "INLINE"
+                if op in ("BDC", "BMC"):
+                    depth += 1
+                    if cur_depth is None and op == "BDC" and len(ins.operands) == 2 and ins.operands[0] == Name.OC \
+                            and str(ins.operands[1]) in layer_of:
+                        cur_depth = depth
+                elif op == "EMC":
+                    if cur_depth == depth:
+                        cur_depth = None
+                    depth -= 1
+                elif op in _PAINT_OPS and (cur_depth is None or op in ("Do", "sh", "INLINE")):
+                    return []
+                elif op in ("k", "K", "g", "G", "rg", "RG"):
+                    v = [float(x) for x in ins.operands]
+                    white = (op in ("k", "K") and not any(v)) or (op in ("g", "G", "rg", "RG") and all(x == 1 for x in v))
+                    if not white:
+                        return []
+                elif op in ("cs", "CS") and str(ins.operands[0]) in ("/DeviceCMYK", "/DeviceRGB", "/DeviceGray"):
+                    return []
+            return [{"name": n, "on": n not in hidden} for n in names[::-1]]
+    except Exception:
+        return []
+
+
+def normalise_page(src: str, page_index: int, dst: str, only_layer: str | None = None) -> dict:
     """Write page `page_index` of `src` to `dst` as an upright page at origin.
 
     Returns geometry {width, height, trim:[x0,y0,x1,y1], bleed:[...], has_trim}.
@@ -148,7 +197,7 @@ def normalise_page(src: str, page_index: int, dst: str) -> dict:
             res = _inherited(p.obj, "/Resources") or Dictionary()
         p.contents_coalesce()
         data = p.obj.Contents.read_bytes() if "/Contents" in p.obj else b""
-        data = _drop_hidden_layers(spdf, out, p, res, data)
+        data = _filter_layers(spdf, out, res, data, only_layer)
 
     x0, y0, x1, y1 = view
     w, h = x1 - x0, y1 - y0

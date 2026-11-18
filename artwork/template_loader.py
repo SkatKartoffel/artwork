@@ -62,6 +62,18 @@ def load(update_files: int = 0):
 				continue
 			with open(path, "rb") as fh:
 				content = fh.read()
+			if existing:
+				# only refresh templates this loader made, and only when the bundled PDF really changed
+				cur = frappe.get_doc("Artwork Supplier Template", existing[0].name)
+				same = False
+				try:
+					fname_cur = frappe.db.get_value("File", {"file_url": cur.template_file}, "name")
+					same = bool(fname_cur) and frappe.get_doc("File", fname_cur).get_content() == content
+				except Exception:
+					same = False
+				if same or "Packaged Sounds standard template" not in (cur.notes or ""):
+					skipped.append(cur.name)
+					continue
 			title = f"{r['supplier']} – {r['product_size']} {r['print_type']}" + (f" – {variant}" if variant else "")
 			fname = title.replace('"', "in").replace("–", "-").replace("/", "-") + ".pdf"
 			fdoc = frappe.get_doc({"doctype": "File", "file_name": fname, "is_private": 1, "content": content})

@@ -8,18 +8,20 @@ from .colour import add_output_intent
 
 
 def compose(out_path: str, tpl: dict, layers: list[dict], *, output_intent: dict | None = None,
-            gray_spots: list[str] | None = None, title: str = "", keep_open=False):
+            gray_spots: list[str] | None = None, title: str = "", keep_open=False, panel_order: list[str] | None = None):
     """layers: [{path, offset:(dx,dy), label, overprint, clip:[x0,y0,x1,y1]|None}]
 
     Layer order is paint order (first = bottom).  Every layer becomes an
     Optional Content Group so it shows up as a named layer in Acrobat / RIPs.
+    Entries with the same label share one layer; "off": True hides a layer by default.
+    panel_order: layer names as they should be listed in the layers panel, top first.
     """
     out = pikepdf.new()
     W, H = tpl["width"], tpl["height"]
     out.add_blank_page(page_size=(W, H))
     page = out.pages[0]
     xobjs, props, ocgs, parts = Dictionary(), Dictionary(), [], []
-    srcs = []
+    srcs, by_label, off_labels = [], {}, set()
     for i, layer in enumerate(layers):
         src = pikepdf.open(layer["path"])
         srcs.append(src)
@@ -34,8 +36,13 @@ def compose(out_path: str, tpl: dict, layers: list[dict], *, output_intent: dict
         form.Resources = tmp.obj.get("/Resources", Dictionary())
         del out.pages[-1]
         xobjs[f"/Fx{i}"] = out.make_indirect(form)
-        ocg = out.make_indirect(Dictionary(Type=Name.OCG, Name=pikepdf.String(layer.get("label") or f"Layer {i + 1}")))
-        ocgs.append(ocg)
+        label = layer.get("label") or f"Layer {i + 1}"
+        if label not in by_label:
+            by_label[label] = out.make_indirect(Dictionary(Type=Name.OCG, Name=pikepdf.String(label)))
+            ocgs.append(by_label[label])
+        if layer.get("off"):
+            off_labels.add(label)
+        ocg = by_label[label]
         props[f"/OC{i}"] = ocg
         dx, dy = layer.get("offset", (0, 0))
         s = f"/OC /OC{i} BDC q "
@@ -55,9 +62,15 @@ def compose(out_path: str, tpl: dict, layers: list[dict], *, output_intent: dict
     page.obj.Contents = out.make_stream("".join(parts).encode())
     page.obj.TrimBox = Array([round(v, 4) for v in tpl["trim"]])
     page.obj.BleedBox = Array([round(v, 4) for v in tpl["bleed"]])
+    order = ocgs
+    if panel_order:
+        order = [by_label[n] for n in panel_order if n in by_label]
+        order += [o for o in ocgs if all(o.objgen != x.objgen for x in order)]
+    off = [by_label[n] for n in by_label if n in off_labels]
+    on = [o for o in ocgs if all(o.objgen != x.objgen for x in off)]
     out.Root.OCProperties = Dictionary(
         OCGs=Array(ocgs),
-        D=Dictionary(Name=pikepdf.String("Layers"), Order=Array(ocgs), ON=Array(ocgs), OFF=Array()),
+        D=Dictionary(Name=pikepdf.String("Layers"), Order=Array(order), ON=Array(on), OFF=Array(off)),
     )
     if gray_spots:
         wanted = {f"/{n}" for n in gray_spots}
