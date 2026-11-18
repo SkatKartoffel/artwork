@@ -168,7 +168,7 @@ def proof_sheet(out_pdf, preview_png, details: list[tuple[str, str]], warnings: 
     # footer
     foot = ("Please check this proof carefully: text, spelling, layout, barcodes and catalogue numbers. "
             "On-screen and printed proofs are not colour accurate. Coloured overlays show special finishes "
-            "and are not printed as shown. The template (dieline) layer is for position only and will not print. "
+            "and are not printed as shown. The guide lines (trim, bleed, safe and fold lines) are for position only and will not print. "
             "Production starts only after written approval.")
     yy = H - 52
     for ln in wrap(foot, W - 2 * M, 8):

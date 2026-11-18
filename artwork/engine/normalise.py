@@ -98,19 +98,32 @@ def _ocg_state(spdf):
     return names[::-1], {str(o.get("/Name")) for o in ocp.OCGs if o.objgen in off}
 
 
-def _filter_layers(spdf, out, res, data: bytes, only_layer: str | None = None) -> bytes:
+def _filter_layers(spdf, out, res, data: bytes, only_layer: str | None = None, drop_tags=()) -> bytes:
     """only_layer=None: drop content on layers (OCGs) that are switched off by default, e.g. a template's
     hidden notes layer.  only_layer="Guides": keep just that layer's content (plus graphics state set outside it)."""
     try:
         _, hidden_names = _ocg_state(spdf)
-        if only_layer is None and not hidden_names:
+        drop_tags = {"/" + t.lstrip("/") for t in drop_tags}
+        if only_layer is None and not hidden_names and not drop_tags:
             return data
         props = (res.get("/Properties") or {}) if res is not None else {}
         layer_of = {str(k): str(v.get("/Name")) for k, v in props.items() if isinstance(v, Dictionary) and "/Name" in v}
         tmp = out.make_stream(data)
-        keep, depth, cur, cur_depth = [], 0, None, None
+        keep, depth, cur, cur_depth, tag_depth = [], 0, None, None, None
         for ins in pikepdf.parse_content_stream(tmp):
             op = str(ins.operator) if not isinstance(ins, pikepdf.ContentStreamInlineImage) else "INLINE"
+            if tag_depth is not None:                      # inside a tagged block that is being left out (the key)
+                if op in ("BDC", "BMC"):
+                    depth += 1
+                elif op == "EMC":
+                    depth -= 1
+                    if depth < tag_depth:
+                        tag_depth = None
+                continue
+            if op == "BMC" and drop_tags and str(ins.operands[0]) in drop_tags:
+                depth += 1
+                tag_depth = depth
+                continue
             if op in ("BDC", "BMC"):
                 depth += 1
                 if cur_depth is None and op == "BDC" and len(ins.operands) == 2 and ins.operands[0] == Name.OC \
@@ -171,7 +184,7 @@ def template_layers(src: str, page_index: int = 0) -> list[dict]:
         return []
 
 
-def normalise_page(src: str, page_index: int, dst: str, only_layer: str | None = None) -> dict:
+def normalise_page(src: str, page_index: int, dst: str, only_layer: str | None = None, drop_key: bool = False) -> dict:
     """Write page `page_index` of `src` to `dst` as an upright page at origin.
 
     Returns geometry {width, height, trim:[x0,y0,x1,y1], bleed:[...], has_trim}.
@@ -197,7 +210,7 @@ def normalise_page(src: str, page_index: int, dst: str, only_layer: str | None =
             res = _inherited(p.obj, "/Resources") or Dictionary()
         p.contents_coalesce()
         data = p.obj.Contents.read_bytes() if "/Contents" in p.obj else b""
-        data = _filter_layers(spdf, out, res, data, only_layer)
+        data = _filter_layers(spdf, out, res, data, only_layer, drop_tags=("PSKey",) if drop_key else ())
 
     x0, y0, x1, y1 = view
     w, h = x1 - x0, y1 - y0

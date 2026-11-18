@@ -8,6 +8,8 @@ used and tested without Frappe.
 from __future__ import annotations
 
 import os
+
+import pikepdf
 import shutil
 
 from . import colour, geometry
@@ -23,6 +25,17 @@ DEFAULT_TEMPLATE_ALIASES = ["Template", "Dieline", "Die Line", "Die", "Cut", "Cu
                             "Bleed", "Safe Area", "Score / Fold", "Glue", "Notes", "Perforation"]
 # spot names of the Packaged Sounds template standard: always treated as template lines, never printed
 PS_STANDARD_SPOTS = ["Cut", "Bleed", "Safe Area", "Score / Fold", "Glue", "Notes", "Perforation"]
+# how each guide colour is shown on the customer proof: spot name -> (layer label, colour); drawn in this order
+PS_SPOT_DISPLAY = {
+    "Glue": ("Glue Area", "#8A8A8A"),
+    "Notes": (None, "#1A1A1A"),                 # the template title: drawn, not listed
+    "All": (None, "#1A1A1A"),                   # crop marks: drawn, not listed
+    "Bleed": ("Bleed Line", "#79C143"),
+    "Perforation": ("Perforation", "#5C2D91"),
+    "Score / Fold": ("Fold crease line", "#F7941D"),
+    "Safe Area": ("Safe Line", "#00447C"),
+    "Cut": ("Trim Line", "#E6005C"),
+}
 
 
 def process_component(job: dict) -> dict:
@@ -243,42 +256,36 @@ def process_component(job: dict) -> dict:
     tpl_layer = {"path": W("tpl_spot.pdf"), "offset": (0, 0), "label": f"{tspot} (spot, non-printing)", "overprint": True}
     print_pdf = os.path.join(work, f"{base}_print.pdf")
     tpage = int(tcfg.get("page") or 1) - 1
-    tlayers = [] if opt.get("flatten_template") else template_layers(tcfg["path"], tpage)
-    if tlayers:
-        # a layered template (the Packaged Sounds standard): keep its layers and spot colours as they are,
-        # with the artwork inside the template's own "Artwork" layer
-        names = [l["name"] for l in tlayers]                       # top of the layer panel first
-        if "Artwork" in names:
-            art_layer["label"] = "Artwork"
-        stack = [art_layer, *[u["layer"] for u in up_layers]]
-        for i, l in enumerate(reversed(tlayers)):
-            if l["name"] == art_layer["label"]:
-                continue
-            normalise_page(tcfg["path"], tpage, W(f"tpl_layer{i}.pdf"), only_layer=l["name"])
-            stack.append({"path": W(f"tpl_layer{i}.pdf"), "offset": (0, 0), "label": l["name"], "overprint": True,
-                          "off": not l["on"]})
-        panel = []
-        for n in names:
-            if n == art_layer["label"]:
-                panel += [u["layer"]["label"] for u in reversed(up_layers)]
-            panel.append(n)
-        if art_layer["label"] not in names:
-            panel += [u["layer"]["label"] for u in reversed(up_layers)] + [art_layer["label"]]
-        rep.info["template_layers"] = names
-        compose(print_pdf, tpl, stack, panel_order=panel,
-                output_intent={"profile_path": col["profile_path"], "identifier": col.get("identifier") or "CMYK",
-                               "info": col.get("identifier") or ""},
-                title=base)
-    else:
-        compose(print_pdf, tpl, [art_layer, *[u["layer"] for u in up_layers], tpl_layer],
-                output_intent={"profile_path": col["profile_path"], "identifier": col.get("identifier") or "CMYK",
-                               "info": col.get("identifier") or ""},
-                title=base)
+    standard = bool(template_layers(tcfg["path"], tpage)) and not opt.get("flatten_template")
+    if standard:
+        # a template in the Packaged Sounds standard format: its guide lines stay in their own spot colours
+        # (Cut, Bleed, Safe Area, Score / Fold ...) on one non-printing template layer
+        tpl_layer = {"path": W("tpl_norm.pdf"), "offset": (0, 0), "label": "Template (guides, non-printing)", "overprint": True}
+    compose(print_pdf, tpl, [art_layer, *[u["layer"] for u in up_layers], tpl_layer],
+            output_intent={"profile_path": col["profile_path"], "identifier": col.get("identifier") or "CMYK",
+                           "info": col.get("identifier") or ""},
+            title=base)
 
     preview_png = os.path.join(work, f"{base}_preview.png")
     tpl_prev = {"label": tspot, "spot": tspot, "rgb": tcfg.get("display_rgb") or "#E6007E", "opacity": 1.0,
                 "layer": tpl_layer}
-    coverage = render_preview(tpl, art_layer, [*up_layers, tpl_prev], preview_png, dpi=int(opt.get("preview_dpi") or 110))
+    tpl_prevs, tpl_legend = [tpl_prev], [(f"{tspot} – position only, not printed", tpl_prev["rgb"])]
+    if standard:
+        # proof: every guide colour is its own layer, and the key printed on the template is left out
+        normalise_page(tcfg["path"], tpage, W("tpl_nokey.pdf"), drop_key=True)
+        with pikepdf.open(W("tpl_nokey.pdf")) as p:
+            present = list_spot_names(p)
+        tpl_prevs, tpl_legend = [], []
+        order = [n for n in PS_SPOT_DISPLAY if any(name_matches(s_, [n]) for s_ in present)]
+        order += [s_ for s_ in present if not any(name_matches(s_, [n]) for n in PS_SPOT_DISPLAY)]
+        for i, sname in enumerate(order):
+            label, rgb = PS_SPOT_DISPLAY.get(sname, (sname, "#E6007E"))
+            run_mode(W("tpl_nokey.pdf"), W(f"tpl_sp{i}.pdf"), "extract", spot_name=sname, targets=[sname])
+            tpl_prevs.append({"label": label or sname, "spot": sname, "rgb": rgb, "opacity": 1.0,
+                              "layer": {"path": W(f"tpl_sp{i}.pdf"), "offset": (0, 0), "label": sname, "overprint": True}})
+            if label:
+                tpl_legend.append((label, rgb))
+    coverage = render_preview(tpl, art_layer, [*up_layers, *tpl_prevs], preview_png, dpi=int(opt.get("preview_dpi") or 110))
     for u in up_layers:
         if coverage.get(u["spot"], 1) < 0.0001:
             rep.error("UPGRADE_EMPTY", f"{u['label']} layer is empty – nothing would be applied.")
@@ -287,8 +294,7 @@ def process_component(job: dict) -> dict:
     result = {"print_pdf": print_pdf, "preview_png": preview_png, **rep.as_dict()}
     if job.get("proof") is not None:
         proof_pdf = os.path.join(work, f"{base}_proof.pdf")
-        legend = [("Artwork (CMYK)", "#FFFFFF")] + [(u["label"], u["rgb"]) for u in up_layers] + \
-                 [(f"{tspot} – position only, not printed", tpl_prev["rgb"])]
+        legend = [("Artwork (CMYK)", "#FFFFFF")] + [(u["label"], u["rgb"]) for u in up_layers] + tpl_legend
         details = list(job["proof"].get("details") or [])
         details += [("Colour profile", f"{col.get('identifier')} (max {limit:.0f}% ink)"),
                     ("Fonts", "Converted to outlines" if opt.get("outline_fonts") else "Embedded")]

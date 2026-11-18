@@ -13,3 +13,4 @@ artwork.patches.full_print_spec_on_item
 artwork.patches.print_spec_tab
 artwork.patches.load_standard_templates
 artwork.patches.standard_templates_no_supplier_name
+artwork.patches.standard_templates_key_tag
