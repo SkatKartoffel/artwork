@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import cint
 
 
 def escape_html(text: str) -> str:
@@ -72,6 +73,8 @@ def spec_description(doc) -> str:
 		product,
 		_label("Artwork Stock", doc.get("artwork_stock")),
 		_label("Artwork Print Colour", doc.get("artwork_print_colours")),
+		(f"+ {cint(doc.artwork_spot_colours)} spot colour" + ("s" if cint(doc.artwork_spot_colours) != 1 else ""))
+		if cint(doc.get("artwork_spot_colours")) else None,
 		f"{doc.artwork_finish} finish" if doc.get("artwork_finish") else None,
 		_label("Artwork Coating", doc.get("artwork_coating")),
 		", ".join(u.upgrade for u in doc.get("artwork_upgrades") or [] if u.upgrade) or None,
