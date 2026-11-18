@@ -233,7 +233,9 @@ class ArtworkProof(Document):
 		return url
 
 	@frappe.whitelist()
-	def send_to_customer(self, recipients=None, message=None):
+	def send_to_customer(self, recipients=None, message=None, no_email=0):
+		"""Open the proof for customer approval and email them the link.
+		no_email=1: only open it for approval - staff copy the approval link and send it themselves."""
 		self._fresh()
 		from artwork.processing import build_combined_proof, file_path
 
@@ -247,9 +249,10 @@ class ArtworkProof(Document):
 			lines = "".join(f"<li><b>{escape_html(w.item)}</b>: {escape_html(w.message)}</li>" for w in self.open_errors()[:10])
 			frappe.throw(_("Preflight errors must be fixed or ticked as OK'd before sending:") + f"<ul>{lines}</ul>",
 				title=_("Unresolved preflight errors"))
+		no_email = cint(no_email)
 		recipients = recipients or self.contact_email
-		if not recipients:
-			frappe.throw(_("Set the customer email first."))
+		if not recipients and not no_email:
+			frappe.throw(_("Set the customer email first, or use Customer Links > Open for Approval (no email)."))
 
 		self.revision = cint(self.revision) + 1
 		self.ensure_access_key()
@@ -271,12 +274,22 @@ class ArtworkProof(Document):
 		if p:
 			with open(p, "rb") as fh:
 				attachments.append({"fname": f"{self.name}-rev{self.revision}-proof.pdf", "fcontent": fh.read()})
-		frappe.sendmail(recipients=recipients, cc=self.cc_emails,
-			subject=_("Artwork proof for approval: {0} (rev {1})").format(self.title or self.name, self.revision),
-			message=body, attachments=attachments, reference_doctype=self.doctype, reference_name=self.name)
+		emailed = False
+		if not no_email:
+			try:
+				frappe.sendmail(recipients=recipients, cc=self.cc_emails,
+					subject=_("Artwork proof for approval: {0} (rev {1})").format(self.title or self.name, self.revision),
+					message=body, attachments=attachments, reference_doctype=self.doctype, reference_name=self.name)
+				emailed = True
+			except frappe.OutgoingEmailError:
+				# no outgoing email account on this site: still open the proof, staff send the link themselves
+				frappe.clear_messages()
+				frappe.msgprint(_("No outgoing email account is set up, so nothing was emailed. The proof is open for "
+					"approval – use Customer Links > Copy Approval Link and send it to the customer yourself."),
+					title=_("Proof opened, email not sent"), indicator="orange")
 		self.status = "Sent to Customer"
 		self.sent_on = now_datetime()
-		self.add_log("Sent to customer", recipients)
+		self.add_log("Sent to customer" if emailed else "Opened for approval (link not emailed)", recipients if emailed else "")
 		self.flags.status_set = True
 		self.save()
 		return url

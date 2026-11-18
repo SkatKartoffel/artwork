@@ -41,6 +41,11 @@ frappe.ui.form.on("Artwork Proof", {
 				frm.add_custom_button(__("Send Proof to Customer"), () =>
 					frm.events.email_dialog(frm, "send_to_customer", __("Send proof")));
 				frm.change_custom_button_type(__("Send Proof to Customer"), null, "primary");
+				// no email: just open the proof for approval and copy the link to send by hand
+				frm.add_custom_button(__("Open for Approval (no email)"), async () => {
+					await frm.events.run(frm, "send_to_customer", { no_email: 1 });
+					frm.events.copy_link(frm, "artwork_approval");
+				}, __("Customer Links"));
 			}
 			frm.add_custom_button(__("Cancel Proof"), () =>
 				frappe.confirm(__("Cancel this proof?"), () => frm.events.run(frm, "cancel_proof")), __("Actions"));
