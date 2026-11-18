@@ -1,3 +1,7 @@
+> **This repository is retired.** Artwork now lives inside MiloMRP
+> (https://github.com/SkatKartoffel/milomrp, folder `milomrp/artwork/`, from v0.13.0). To move a site, follow
+> "Moving a site from the artwork app" in MiloMRP's README. Once the site has moved, this repository can be deleted.
+
 # Artwork – proofing for Packaged Sounds (Frappe / ERPNext app)
 
 Turns customer-supplied artwork into print-ready, supplier-aligned PDFs with proper spot layers, the correct colour profile, ink limits and preflight warnings. Proofs go to the customer for approval, and everything stays linked to the Job Ticket (Project) and the SKU (Item).
